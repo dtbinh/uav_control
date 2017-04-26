@@ -3,6 +3,7 @@ import numpy as np
 import numpy.linalg as la
 import pdb
 import sys
+import numba # use just in time compiling for speed up
 
 
 class UAV(object):
@@ -40,7 +41,7 @@ class UAV(object):
         self.kv = 5.6*self.m # position gains
         print('UAV: initialized')
 
-    def position_control(self, t, R, W, x, v, d_in):
+    def position_control(self, R, W, x, v, d_in):
         """Geometric Position Controller
 
         This ...
@@ -59,10 +60,10 @@ class UAV(object):
         x_2dot = self.g*self.e3 - f*R.dot(self.e3)/self.m
         ex_2dot = x_2dot - xd_2dot
 
-        f_dot = ( self.kx*ev + self.kv*ex_2dot
+        f_dot = (( self.kx*ev + self.kv*ex_2dot
                 + self.m*xd_3dot).dot(R.dot(self.e3))
                 + ( self.kx*ex + self.kv*ev + self.m*self.g*self.e3
-                - self.m*xd_3dot).dot(np.dot(R_dot,self.e3))
+                - self.m*xd_3dot).dot(np.dot(R_dot,self.e3)))
 
         x_3dot = -1/self.m*( f_dot*R + f*R_dot ).dot(self.e3)
         ex_3dot = x_3dot - xd_3dot
@@ -74,12 +75,12 @@ class UAV(object):
         (Rd, Wd, Wd_dot) = get_Rc(A, A_dot, A_2dot , b1d, b1d_dot, b1d_ddot)
 
         (eR, eW) = attitude_errors( R, Rd, W, Wd )
-        M= -self.kR*eR - self.kW*eW + np.cross(W, self.J.dot(W))
+        M= (-self.kR*eR - self.kW*eW + np.cross(W, self.J.dot(W))
             - self.J.dot(W_hat.dot(R.T.dot(Rd.dot(Wd)))
-            - R.T.dot(Rd.dot(Wd_dot)))
+            - R.T.dot(Rd.dot(Wd_dot))))
         return (f, M)
 
-    def velocity_control(self, t, R, W, x, v, d_in):
+    def velocity_control(self, R, W, x, v, d_in):
         """Geometric Velocity Controller"""
         (xd, xd_dot, xd_2dot, xd_3dot, xd_4dot,
                 b1d, b1d_dot, b1d_ddot, Rd, Wd, Wd_dot) = d_in
@@ -92,9 +93,9 @@ class UAV(object):
         x_2dot = self.g*self.e3 - f*R.dot(self.e3)/self.m
         ex_2dot = x_2dot - xd_2dot
 
-        f_dot = ( self.kx*ex_2dot - self.m*xd_3dot).dot(R.dot(self.e3))
+        f_dot = (( self.kx*ex_2dot - self.m*xd_3dot).dot(R.dot(self.e3))
             + ( self.kx*ev + self.m*self.g*self.e3
-                    - self.m*xd_3dot).dot(np.dot(R_dot,self.e3))
+                    - self.m*xd_3dot).dot(np.dot(R_dot,self.e3)))
 
         x_3dot = -1/self.m*( f_dot*R + f*R_dot ).dot(self.e3)
         ex_3dot = x_3dot - xd_3dot
@@ -105,13 +106,13 @@ class UAV(object):
 
         (Rd, Wd, Wd_dot) = get_Rc(A, A_dot, A_2dot , b1d, b1d_dot, b1d_ddot)
         (eR, eW) = attitude_errors( R, Rd, W, Wd )
-        M= -self.kR*eR - self.kW*eW
+        M= (-self.kR*eR - self.kW*eW
             + np.cross(W, self.J.dot(W))
             - self.J.dot(W_hat.dot(R.T.dot(Rd.dot(Wd)))
-            - R.T.dot(Rd.dot(Wd_dot)))
+            - R.T.dot(Rd.dot(Wd_dot))))
         return (f, M)
 
-    def attitude_control(self, t, R, W, x, v, d_in):
+    def attitude_control(self, R, W, x, v, d_in):
         """Geometric Attitude Controller
         Args:
             R (mat): Attitude
@@ -127,9 +128,9 @@ class UAV(object):
         f = (self.kx*ex + self.kv*v + self.m*self.g*self.e3).dot(R.dot(self.e3))
         W_hat = hat(W)
         (eR, eW) = attitude_errors( R, Rd, W, Wd )
-        M= -self.kR*eR - self.kW*eW + np.cross(W, self.J.dot(W))
+        M= (-self.kR*eR - self.kW*eW + np.cross(W, self.J.dot(W))
             - self.J.dot(W_hat.dot(R.T.dot(Rd.dot(Wd)))
-            - R.T.dot(Rd.dot(Wd_dot)))
+            - R.T.dot(Rd.dot(Wd_dot))))
         return (f, M)
 
 def get_Rc(A, A_dot, A_2dot, b1d, b1d_dot, b1d_ddot):
@@ -137,20 +138,20 @@ def get_Rc(A, A_dot, A_2dot, b1d, b1d_dot, b1d_ddot):
     norm_A = la.norm(A)
     b3c = - A/norm_A
     b3c_dot = - A_dot/norm_A + ( np.dot(A, A_dot)*A )/norm_A**3
-    b3c_2dot = - A_2dot/norm_A + ( 2*np.dot(A*A_dot,A_dot) )/norm_A**3
+    b3c_2dot = (- A_2dot/norm_A + ( 2*np.dot(A*A_dot,A_dot) )/norm_A**3
         + np.dot( A_dot* A_dot + A*A_2dot ,A)/norm_A**3
-        - 3*np.dot((A*A_dot)**2,A)/norm_A**5
+        - 3*np.dot((A*A_dot)**2,A)/norm_A**5)
 
     b_ = np.cross(b3c, b1d)
     b_norm = la.norm(b_)
     b_dot = np.cross(b3c_dot, b1d) + np.cross(b3c, b1d_dot)
-    b_2dot = np.cross(b3c_2dot, b1d) + 2*np.cross(b3c_dot, b1d_dot)
-        + np.cross(b3c, b1d_ddot)
+    b_2dot = (np.cross(b3c_2dot, b1d) + 2*np.cross(b3c_dot, b1d_dot)
+        + np.cross(b3c, b1d_ddot))
 
     b1c = -np.cross( b3c, b_ )/b_norm
-    b1c_dot = -( np.cross(b3c_dot, b_)
+    b1c_dot = (-( np.cross(b3c_dot, b_)
             + np.cross(b3c, b_dot) )/b_norm
-            + np.cross(b3c, b_)*(b_dot* b_)/b_norm**3
+            + np.cross(b3c, b_)*(b_dot* b_)/b_norm**3)
 
     # intermediate steps to calculate b1c_2dot
     m_1 = ( np.cross(b3c_2dot, b_) + 2*np.cross(b3c_dot, b_dot)
@@ -159,8 +160,8 @@ def get_Rc(A, A_dot, A_2dot, b1d, b1d_dot, b1d_ddot):
             + np.cross(b3c, b_dot) )*np.dot(b_dot, b_)/b_norm**3
     m_dot = m_1 - m_2
     n_1 = np.cross(b3c, b_)*np.dot(b_dot, b_)
-    n_1dot = ( np.cross(b3c_dot, b_) + np.cross(b3c, b_dot) )*np.dot(b_dot, b_)
-        + np.cross(b3c, b_)*( np.dot(b_2dot, b_)+np.dot(b_dot, b_dot) )
+    n_1dot = (( np.cross(b3c_dot, b_) + np.cross(b3c, b_dot) )*np.dot(b_dot, b_)
+        + np.cross(b3c, b_)*( np.dot(b_2dot, b_)+np.dot(b_dot, b_dot)))
     n_dot = n_1dot/b_norm**3 - 3*n_1*np.dot(b_dot, b_)/b_norm**5
     b1c_2dot = -m_dot + n_dot
 
@@ -179,19 +180,19 @@ def vee(M):
 
 def attitude_errors( R, Rd, W, Wd ):
     eR = 0.5*vee(Rd.T.dot(R) - R.T.dot(Rd))
-  eW = W - R.T.dot(Rd.dot(Wd))
-  return (eR, eW)
+    eW = W - R.T.dot(Rd.dot(Wd))
+    return (eR, eW)
 
 def position_errors(x, xd, v, vd):
     ex = x - xd
-  ev = v - vd
-  return (ex, ev)
+    ev = v - vd
+    return (ex, ev)
 
 def rot_eul(x_in):
     theta_x = np.arctan2(x_in[:,7], x_in[:,8])
-  theta_y = np.arctan2(x_in[:,6], (x_in[:,7]**2+x_in[:,8]**2)**(1/2))
-  theta_z = np.arctan2(x_in[:,1], x_in[:,0])
-  return np.array([theta_x,theta_y,theta_z]).T
+    theta_y = np.arctan2(x_in[:,6], (x_in[:,7]**2+x_in[:,8]**2)**(1/2))
+    theta_z = np.arctan2(x_in[:,1], x_in[:,0])
+    return np.array([theta_x,theta_y,theta_z]).T
 
 def hat(x):
     hat_x = [0, -x[2], x[1],
@@ -203,6 +204,7 @@ if __name__ == "__main__":
     # execute only if run as a script
   J = np.diag([0.0820, 0.0845, 0.1377])
   e3 = np.array([0.,0.,1.])
+  # TODO: move gains here for initialization of the UAV
   uav_t = UAV(J, e3)
   t_max = 12
   N = 100*t_max + 1
