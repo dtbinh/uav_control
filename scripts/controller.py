@@ -5,7 +5,7 @@ import pdb
 import sys
 
 
-class UAV(object):
+class Controller(object):
     """UAV controller
         This module is an implementation of nonlinear geometric controller
         developped by Dr. Taeyoung Lee. The class function with given physical
@@ -203,7 +203,7 @@ if __name__ == "__main__":
     # execute only if run as a script
   J = np.diag([0.0820, 0.0845, 0.1377])
   e3 = np.array([0.,0.,1.])
-  uav_t = UAV(J, e3)
+  uav_t = Controller(J, e3)
   t_max = 12
   N = 100*t_max + 1
   t = np.linspace(0,t_max,N)
