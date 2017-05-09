@@ -11,7 +11,8 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 ## System dependencies are found with CMake's conventions
-# find_package(Boost REQUIRED COMPONENTS system)
+find_package(Boost REQUIRED COMPONENTS python)
+include_directories(PythonLibs 2.7 REQUIRED)
 
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -115,6 +116,7 @@ catkin_package(
 # include_directories(include)
 include_directories(
   ${catkin_INCLUDE_DIRS}
+  ${PYTHON_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
@@ -128,7 +130,7 @@ include_directories(
 # add_dependencies(UAV_control ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
-# add_executable(UAV_control_node src/UAV_control_node.cpp)
+add_executable(i2c_interface src/i2c_interface.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
@@ -138,7 +140,9 @@ include_directories(
 # target_link_libraries(UAV_control_node
 #   ${catkin_LIBRARIES}
 # )
-
+target_link_libraries(i2c_interface
+    ${PYTHON_LIBRARIES}
+    )
 #############
 ## Install ##
 #############
