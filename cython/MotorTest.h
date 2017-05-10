@@ -1,38 +1,48 @@
-#include "hw_interface.h"
+#include <linux/i2c-dev.h>
+#include <string.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <termios.h>
+#include <stdint.h>
+#include <sys/ioctl.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <vector>
+#include <iostream>
 
+#define i2c_addr 0x40
 
-int thr = 20;// i2c motor command
-
-hw_interface::hw_interface(){
-    std::vector<int> address;
-    for(int i = 0; i < 4; i++){
-        mtr_addr[i] = address[i];
+// User header files
+class hw_interface{
+    public:
+    std::vector<int> motor_address;
+    int fhi2c;
+    std::vector<int> status;
+    hw_interface(std::vector<int> address){
+        motor_address = address;
+    };
+    ~hw_interface(){};
+    std::vector<int> get_motor_address(){
+        return motor_address;
     }
-}
-hw_interface::~hw_interface(){}
-int hw_interface::test(){
-    return 5;
-}
 
-std::vector<int> hw_interface::get_mtrAddr(){
-    return mtr_addr;
-}
-uint8_t* hw_interface::motor_command(int* thr, bool MotorWarmup, bool MOTOR_ON){
+    std::vector<int> motor_command(std::vector<int> throttle, bool MotorWarmup, bool MOTOR_ON){
   // Execute motor output commands
   int length = 6;
   char buffer[6];
-  uint8_t  *msg = new uint8_t[24] ;
   for(int i=0;i<4;i++){
     tcflush(fhi2c, TCIOFLUSH);
 
     usleep(500);
 
-    if(ioctl(fhi2c, I2C_SLAVE, mtr_addr[i])<0)
+    if(ioctl(fhi2c, I2C_SLAVE, motor_address[i])<0)
     printf("ERROR: ioctl\n");
     read(fhi2c,buffer,length);
     //printf("Motor:%d ",i);
     for(int k=0;k<length;k++){
-      msg[i*6+k] = ((uint8_t)buffer[k]);
+      status[i*6+k] = (int)((uint8_t)buffer[k]);
       //printf("%d, ", buffer[k]);
     }
     //printf("\n");
@@ -42,31 +52,32 @@ uint8_t* hw_interface::motor_command(int* thr, bool MotorWarmup, bool MOTOR_ON){
     //printf("Motor %i I2C write command of %i to address %i (%e N).\n", i, thr[i], mtr_addr[i], f[i]);
     tcflush(fhi2c, TCIOFLUSH);
     usleep(500);
-    if(ioctl(fhi2c, I2C_SLAVE, mtr_addr[i])<0)
+    if(ioctl(fhi2c, I2C_SLAVE, motor_address[i])<0)
     printf("ERROR: ioctl\n");
     if(MOTOR_ON == false)// set motor speed to zero
-      thr[i] = 0;
+      throttle[i] = 0;
     else if(MotorWarmup == true)// warm up motors at 20 throttle command
-      thr[i] = 20;
-    while(write(fhi2c, &thr[i], 1)!=1)
-    printf("ERROR: Motor %i I2C write command of %i to address %i not sent.\n", i, thr[i], mtr_addr[i]);
+      throttle[i] = 20;
+    while(write(fhi2c, &throttle[i], 1)!=1)
+    printf("ERROR: Motor %i I2C write command of %i to address %i not sent.\n", i, throttle[i], motor_address[i]);
   }
-  return msg;
+  return status;
 }
 
-void hw_interface::open_I2C(){
-     // Open i2c:
-  fhi2c = open("/dev/i2c-1", O_RDWR);// Chris
-  printf("Opening i2c port...\n");
-  if(fhi2c!=3)
-  printf("ERROR opening i2c port.\n");
-  else
-  printf("The i2c port is open.\n");
-  usleep(100000);
-  tcflush(fhi2c, TCIFLUSH);
-  usleep(100000);
 
-  // Call and response from motors
+    void open_i2c(){
+        int fhi2c = open("/dev/i2c-1", O_RDWR);
+        std::cout<<"opening i2c"<<std::endl;
+        std::cout<<fhi2c<<std::endl;
+          printf("Opening i2c port...\n");
+        if(fhi2c!=3)
+            printf("ERROR opening i2c port.\n");
+        else
+            printf("The i2c port is open.\n");
+        usleep(100000);
+        tcflush(fhi2c, TCIFLUSH);
+        usleep(100000);
+          // Call and response from motors
   printf("Checking motors...\n");
   int motornum, motoraddr, motorworks;
   int thr0 = 0;// 0 speed test command
@@ -101,5 +112,9 @@ void hw_interface::open_I2C(){
     }
   }
   printf("All motors are working.\n");
-}
-
+    }
+    std::vector<int> test(std::vector<int> msg){
+        std::cout<<msg[0]<<std::endl;
+        return msg;
+    };
+};
