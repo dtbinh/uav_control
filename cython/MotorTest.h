@@ -27,27 +27,40 @@ class hw_interface{
     std::vector<int> get_motor_address(){
         return motor_address;
     }
+    void single_motor_test(int motor, int throttle){
+        for(int ii=1;ii<2000;ii++)
+    {
+        {
+            if(ioctl(fhi2c, I2C_SLAVE, motor_address[motor])<0)
+                printf("ERROR: ioctl\n");
 
+            if(write(fhi2c, &throttle, 1)!=1)
+                printf("ERROR: write\n");
+            tcflush(fhi2c, TCIFLUSH);
+            usleep(50);
+        }
+    }
+    }
     std::vector<int> motor_command(std::vector<int> throttle, bool MotorWarmup, bool MOTOR_ON){
   // Execute motor output commands
-  int length = 6;
-  char buffer[6];
-  for(int i=0;i<4;i++){
-    tcflush(fhi2c, TCIOFLUSH);
-
-    usleep(500);
-
-    if(ioctl(fhi2c, I2C_SLAVE, motor_address[i])<0)
-    printf("ERROR: ioctl\n");
-    read(fhi2c,buffer,length);
-    //printf("Motor:%d ",i);
-    for(int k=0;k<length;k++){
-      status[i*6+k] = (int)((uint8_t)buffer[k]);
-      //printf("%d, ", buffer[k]);
-    }
-    //printf("\n");
-  }
-
+//  int length = 6;
+//  char buffer[6];
+//  for(int i=0;i<4;i++){
+//    tcflush(fhi2c, TCIOFLUSH);
+//
+//    usleep(500);
+//
+//    if(ioctl(fhi2c, I2C_SLAVE, motor_address[i])<0)
+//    printf("ERROR: ioctl\n");
+//    read(fhi2c,buffer,length);
+//    //printf("Motor:%d ",i);
+//    for(int k=0;k<length;k++){
+//      status[i*6+k] = (int)((uint8_t)buffer[k]);
+//      //printf("%d, ", buffer[k]);
+//    }
+//    //printf("\n");
+//  }
+//
   for(int i = 0; i < 4; i++){
     //printf("Motor %i I2C write command of %i to address %i (%e N).\n", i, thr[i], mtr_addr[i], f[i]);
     tcflush(fhi2c, TCIOFLUSH);

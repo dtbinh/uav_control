@@ -4,6 +4,7 @@ from libcpp cimport bool
 cdef extern from "MotorTest.h":
     cdef cppclass hw_interface:
         hw_interface(vector[int])
+        void single_motor_test(int,int)
         vector[int] motor_command(vector[int],bool,bool)
         void open_i2c()
         vector[int] get_motor_address()
@@ -15,6 +16,8 @@ cdef class pyMotor:
         self.thisptr = new hw_interface(address)
     def __dealloc__(self):
         del self.thisptr
+    def motor_test(self,motor_id, throttle):
+        self.thisptr.single_motor_test(motor_id, throttle)
     def motor_command(self, throttle, motor_warmup, motor_on):
         return self.thisptr.motor_command(throttle, motor_warmup, motor_on)
     def open_i2c(self):

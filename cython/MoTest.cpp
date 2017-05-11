@@ -651,7 +651,7 @@ static const char *__pyx_f[] = {
 /*--- Type declarations ---*/
 struct __pyx_obj_6MoTest_pyMotor;
 
-/* "MoTest.pyx":12
+/* "MoTest.pyx":13
  *         vector[int] test(vector[int])
  * 
  * cdef class pyMotor:             # <<<<<<<<<<<<<<
@@ -834,11 +834,13 @@ static const char __pyx_k_main[] = "__main__";
 static const char __pyx_k_test[] = "__test__";
 static const char __pyx_k_range[] = "range";
 static const char __pyx_k_address[] = "address";
+static const char __pyx_k_motor_id[] = "motor_id";
 static const char __pyx_k_motor_on[] = "motor_on";
 static const char __pyx_k_throttle[] = "throttle";
 static const char __pyx_k_motor_warmup[] = "motor_warmup";
 static PyObject *__pyx_n_s_address;
 static PyObject *__pyx_n_s_main;
+static PyObject *__pyx_n_s_motor_id;
 static PyObject *__pyx_n_s_motor_on;
 static PyObject *__pyx_n_s_motor_warmup;
 static PyObject *__pyx_n_s_range;
@@ -846,13 +848,14 @@ static PyObject *__pyx_n_s_test;
 static PyObject *__pyx_n_s_throttle;
 static int __pyx_pf_6MoTest_7pyMotor___cinit__(struct __pyx_obj_6MoTest_pyMotor *__pyx_v_self, PyObject *__pyx_v_address); /* proto */
 static void __pyx_pf_6MoTest_7pyMotor_2__dealloc__(struct __pyx_obj_6MoTest_pyMotor *__pyx_v_self); /* proto */
-static PyObject *__pyx_pf_6MoTest_7pyMotor_4motor_command(struct __pyx_obj_6MoTest_pyMotor *__pyx_v_self, PyObject *__pyx_v_throttle, PyObject *__pyx_v_motor_warmup, PyObject *__pyx_v_motor_on); /* proto */
-static PyObject *__pyx_pf_6MoTest_7pyMotor_6open_i2c(struct __pyx_obj_6MoTest_pyMotor *__pyx_v_self); /* proto */
-static PyObject *__pyx_pf_6MoTest_7pyMotor_8get_motor_address(struct __pyx_obj_6MoTest_pyMotor *__pyx_v_self); /* proto */
-static PyObject *__pyx_pf_6MoTest_7pyMotor_10pyTest(struct __pyx_obj_6MoTest_pyMotor *__pyx_v_self, PyObject *__pyx_v_msg); /* proto */
+static PyObject *__pyx_pf_6MoTest_7pyMotor_4motor_test(struct __pyx_obj_6MoTest_pyMotor *__pyx_v_self, PyObject *__pyx_v_motor_id, PyObject *__pyx_v_throttle); /* proto */
+static PyObject *__pyx_pf_6MoTest_7pyMotor_6motor_command(struct __pyx_obj_6MoTest_pyMotor *__pyx_v_self, PyObject *__pyx_v_throttle, PyObject *__pyx_v_motor_warmup, PyObject *__pyx_v_motor_on); /* proto */
+static PyObject *__pyx_pf_6MoTest_7pyMotor_8open_i2c(struct __pyx_obj_6MoTest_pyMotor *__pyx_v_self); /* proto */
+static PyObject *__pyx_pf_6MoTest_7pyMotor_10get_motor_address(struct __pyx_obj_6MoTest_pyMotor *__pyx_v_self); /* proto */
+static PyObject *__pyx_pf_6MoTest_7pyMotor_12pyTest(struct __pyx_obj_6MoTest_pyMotor *__pyx_v_self, PyObject *__pyx_v_msg); /* proto */
 static PyObject *__pyx_tp_new_6MoTest_pyMotor(PyTypeObject *t, PyObject *a, PyObject *k); /*proto*/
 
-/* "MoTest.pyx":14
+/* "MoTest.pyx":15
  * cdef class pyMotor:
  *     cdef hw_interface* thisptr
  *     def __cinit__(self, address):             # <<<<<<<<<<<<<<
@@ -885,7 +888,7 @@ static int __pyx_pw_6MoTest_7pyMotor_1__cinit__(PyObject *__pyx_v_self, PyObject
         else goto __pyx_L5_argtuple_error;
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__cinit__") < 0)) __PYX_ERR(0, 14, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__cinit__") < 0)) __PYX_ERR(0, 15, __pyx_L3_error)
       }
     } else if (PyTuple_GET_SIZE(__pyx_args) != 1) {
       goto __pyx_L5_argtuple_error;
@@ -896,7 +899,7 @@ static int __pyx_pw_6MoTest_7pyMotor_1__cinit__(PyObject *__pyx_v_self, PyObject
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 1, 1, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 14, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 1, 1, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 15, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("MoTest.pyMotor.__cinit__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
@@ -915,17 +918,17 @@ static int __pyx_pf_6MoTest_7pyMotor___cinit__(struct __pyx_obj_6MoTest_pyMotor 
   std::vector<int>  __pyx_t_1;
   __Pyx_RefNannySetupContext("__cinit__", 0);
 
-  /* "MoTest.pyx":15
+  /* "MoTest.pyx":16
  *     cdef hw_interface* thisptr
  *     def __cinit__(self, address):
  *         self.thisptr = new hw_interface(address)             # <<<<<<<<<<<<<<
  *     def __dealloc__(self):
  *         del self.thisptr
  */
-  __pyx_t_1 = __pyx_convert_vector_from_py_int(__pyx_v_address); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 15, __pyx_L1_error)
+  __pyx_t_1 = __pyx_convert_vector_from_py_int(__pyx_v_address); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 16, __pyx_L1_error)
   __pyx_v_self->thisptr = new hw_interface(__pyx_t_1);
 
-  /* "MoTest.pyx":14
+  /* "MoTest.pyx":15
  * cdef class pyMotor:
  *     cdef hw_interface* thisptr
  *     def __cinit__(self, address):             # <<<<<<<<<<<<<<
@@ -944,12 +947,12 @@ static int __pyx_pf_6MoTest_7pyMotor___cinit__(struct __pyx_obj_6MoTest_pyMotor 
   return __pyx_r;
 }
 
-/* "MoTest.pyx":16
+/* "MoTest.pyx":17
  *     def __cinit__(self, address):
  *         self.thisptr = new hw_interface(address)
  *     def __dealloc__(self):             # <<<<<<<<<<<<<<
  *         del self.thisptr
- *     def motor_command(self, throttle, motor_warmup, motor_on):
+ *     def motor_test(self,motor_id, throttle):
  */
 
 /* Python wrapper */
@@ -967,38 +970,142 @@ static void __pyx_pf_6MoTest_7pyMotor_2__dealloc__(struct __pyx_obj_6MoTest_pyMo
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("__dealloc__", 0);
 
-  /* "MoTest.pyx":17
+  /* "MoTest.pyx":18
  *         self.thisptr = new hw_interface(address)
  *     def __dealloc__(self):
  *         del self.thisptr             # <<<<<<<<<<<<<<
- *     def motor_command(self, throttle, motor_warmup, motor_on):
- *         return self.thisptr.motor_command(throttle, motor_warmup, motor_on)
+ *     def motor_test(self,motor_id, throttle):
+ *         self.thisptr.single_motor_test(motor_id, throttle)
  */
   delete __pyx_v_self->thisptr;
 
-  /* "MoTest.pyx":16
+  /* "MoTest.pyx":17
  *     def __cinit__(self, address):
  *         self.thisptr = new hw_interface(address)
  *     def __dealloc__(self):             # <<<<<<<<<<<<<<
  *         del self.thisptr
- *     def motor_command(self, throttle, motor_warmup, motor_on):
+ *     def motor_test(self,motor_id, throttle):
  */
 
   /* function exit code */
   __Pyx_RefNannyFinishContext();
 }
 
-/* "MoTest.pyx":18
+/* "MoTest.pyx":19
  *     def __dealloc__(self):
  *         del self.thisptr
+ *     def motor_test(self,motor_id, throttle):             # <<<<<<<<<<<<<<
+ *         self.thisptr.single_motor_test(motor_id, throttle)
+ *     def motor_command(self, throttle, motor_warmup, motor_on):
+ */
+
+/* Python wrapper */
+static PyObject *__pyx_pw_6MoTest_7pyMotor_5motor_test(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
+static PyObject *__pyx_pw_6MoTest_7pyMotor_5motor_test(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
+  PyObject *__pyx_v_motor_id = 0;
+  PyObject *__pyx_v_throttle = 0;
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("motor_test (wrapper)", 0);
+  {
+    static PyObject **__pyx_pyargnames[] = {&__pyx_n_s_motor_id,&__pyx_n_s_throttle,0};
+    PyObject* values[2] = {0,0};
+    if (unlikely(__pyx_kwds)) {
+      Py_ssize_t kw_args;
+      const Py_ssize_t pos_args = PyTuple_GET_SIZE(__pyx_args);
+      switch (pos_args) {
+        case  2: values[1] = PyTuple_GET_ITEM(__pyx_args, 1);
+        case  1: values[0] = PyTuple_GET_ITEM(__pyx_args, 0);
+        case  0: break;
+        default: goto __pyx_L5_argtuple_error;
+      }
+      kw_args = PyDict_Size(__pyx_kwds);
+      switch (pos_args) {
+        case  0:
+        if (likely((values[0] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_motor_id)) != 0)) kw_args--;
+        else goto __pyx_L5_argtuple_error;
+        case  1:
+        if (likely((values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_throttle)) != 0)) kw_args--;
+        else {
+          __Pyx_RaiseArgtupleInvalid("motor_test", 1, 2, 2, 1); __PYX_ERR(0, 19, __pyx_L3_error)
+        }
+      }
+      if (unlikely(kw_args > 0)) {
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "motor_test") < 0)) __PYX_ERR(0, 19, __pyx_L3_error)
+      }
+    } else if (PyTuple_GET_SIZE(__pyx_args) != 2) {
+      goto __pyx_L5_argtuple_error;
+    } else {
+      values[0] = PyTuple_GET_ITEM(__pyx_args, 0);
+      values[1] = PyTuple_GET_ITEM(__pyx_args, 1);
+    }
+    __pyx_v_motor_id = values[0];
+    __pyx_v_throttle = values[1];
+  }
+  goto __pyx_L4_argument_unpacking_done;
+  __pyx_L5_argtuple_error:;
+  __Pyx_RaiseArgtupleInvalid("motor_test", 1, 2, 2, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 19, __pyx_L3_error)
+  __pyx_L3_error:;
+  __Pyx_AddTraceback("MoTest.pyMotor.motor_test", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_RefNannyFinishContext();
+  return NULL;
+  __pyx_L4_argument_unpacking_done:;
+  __pyx_r = __pyx_pf_6MoTest_7pyMotor_4motor_test(((struct __pyx_obj_6MoTest_pyMotor *)__pyx_v_self), __pyx_v_motor_id, __pyx_v_throttle);
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_6MoTest_7pyMotor_4motor_test(struct __pyx_obj_6MoTest_pyMotor *__pyx_v_self, PyObject *__pyx_v_motor_id, PyObject *__pyx_v_throttle) {
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  int __pyx_t_1;
+  int __pyx_t_2;
+  __Pyx_RefNannySetupContext("motor_test", 0);
+
+  /* "MoTest.pyx":20
+ *         del self.thisptr
+ *     def motor_test(self,motor_id, throttle):
+ *         self.thisptr.single_motor_test(motor_id, throttle)             # <<<<<<<<<<<<<<
+ *     def motor_command(self, throttle, motor_warmup, motor_on):
+ *         return self.thisptr.motor_command(throttle, motor_warmup, motor_on)
+ */
+  __pyx_t_1 = __Pyx_PyInt_As_int(__pyx_v_motor_id); if (unlikely((__pyx_t_1 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 20, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyInt_As_int(__pyx_v_throttle); if (unlikely((__pyx_t_2 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 20, __pyx_L1_error)
+  __pyx_v_self->thisptr->single_motor_test(__pyx_t_1, __pyx_t_2);
+
+  /* "MoTest.pyx":19
+ *     def __dealloc__(self):
+ *         del self.thisptr
+ *     def motor_test(self,motor_id, throttle):             # <<<<<<<<<<<<<<
+ *         self.thisptr.single_motor_test(motor_id, throttle)
+ *     def motor_command(self, throttle, motor_warmup, motor_on):
+ */
+
+  /* function exit code */
+  __pyx_r = Py_None; __Pyx_INCREF(Py_None);
+  goto __pyx_L0;
+  __pyx_L1_error:;
+  __Pyx_AddTraceback("MoTest.pyMotor.motor_test", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "MoTest.pyx":21
+ *     def motor_test(self,motor_id, throttle):
+ *         self.thisptr.single_motor_test(motor_id, throttle)
  *     def motor_command(self, throttle, motor_warmup, motor_on):             # <<<<<<<<<<<<<<
  *         return self.thisptr.motor_command(throttle, motor_warmup, motor_on)
  *     def open_i2c(self):
  */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_6MoTest_7pyMotor_5motor_command(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static PyObject *__pyx_pw_6MoTest_7pyMotor_5motor_command(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
+static PyObject *__pyx_pw_6MoTest_7pyMotor_7motor_command(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
+static PyObject *__pyx_pw_6MoTest_7pyMotor_7motor_command(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
   PyObject *__pyx_v_throttle = 0;
   PyObject *__pyx_v_motor_warmup = 0;
   PyObject *__pyx_v_motor_on = 0;
@@ -1026,16 +1133,16 @@ static PyObject *__pyx_pw_6MoTest_7pyMotor_5motor_command(PyObject *__pyx_v_self
         case  1:
         if (likely((values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_motor_warmup)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("motor_command", 1, 3, 3, 1); __PYX_ERR(0, 18, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("motor_command", 1, 3, 3, 1); __PYX_ERR(0, 21, __pyx_L3_error)
         }
         case  2:
         if (likely((values[2] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_motor_on)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("motor_command", 1, 3, 3, 2); __PYX_ERR(0, 18, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("motor_command", 1, 3, 3, 2); __PYX_ERR(0, 21, __pyx_L3_error)
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "motor_command") < 0)) __PYX_ERR(0, 18, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "motor_command") < 0)) __PYX_ERR(0, 21, __pyx_L3_error)
       }
     } else if (PyTuple_GET_SIZE(__pyx_args) != 3) {
       goto __pyx_L5_argtuple_error;
@@ -1050,20 +1157,20 @@ static PyObject *__pyx_pw_6MoTest_7pyMotor_5motor_command(PyObject *__pyx_v_self
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("motor_command", 1, 3, 3, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 18, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("motor_command", 1, 3, 3, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 21, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("MoTest.pyMotor.motor_command", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  __pyx_r = __pyx_pf_6MoTest_7pyMotor_4motor_command(((struct __pyx_obj_6MoTest_pyMotor *)__pyx_v_self), __pyx_v_throttle, __pyx_v_motor_warmup, __pyx_v_motor_on);
+  __pyx_r = __pyx_pf_6MoTest_7pyMotor_6motor_command(((struct __pyx_obj_6MoTest_pyMotor *)__pyx_v_self), __pyx_v_throttle, __pyx_v_motor_warmup, __pyx_v_motor_on);
 
   /* function exit code */
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_6MoTest_7pyMotor_4motor_command(struct __pyx_obj_6MoTest_pyMotor *__pyx_v_self, PyObject *__pyx_v_throttle, PyObject *__pyx_v_motor_warmup, PyObject *__pyx_v_motor_on) {
+static PyObject *__pyx_pf_6MoTest_7pyMotor_6motor_command(struct __pyx_obj_6MoTest_pyMotor *__pyx_v_self, PyObject *__pyx_v_throttle, PyObject *__pyx_v_motor_warmup, PyObject *__pyx_v_motor_on) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   std::vector<int>  __pyx_t_1;
@@ -1072,26 +1179,26 @@ static PyObject *__pyx_pf_6MoTest_7pyMotor_4motor_command(struct __pyx_obj_6MoTe
   PyObject *__pyx_t_4 = NULL;
   __Pyx_RefNannySetupContext("motor_command", 0);
 
-  /* "MoTest.pyx":19
- *         del self.thisptr
+  /* "MoTest.pyx":22
+ *         self.thisptr.single_motor_test(motor_id, throttle)
  *     def motor_command(self, throttle, motor_warmup, motor_on):
  *         return self.thisptr.motor_command(throttle, motor_warmup, motor_on)             # <<<<<<<<<<<<<<
  *     def open_i2c(self):
  *         self.thisptr.open_i2c()
  */
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __pyx_convert_vector_from_py_int(__pyx_v_throttle); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 19, __pyx_L1_error)
-  __pyx_t_2 = __Pyx_PyObject_IsTrue(__pyx_v_motor_warmup); if (unlikely((__pyx_t_2 == ((bool)-1)) && PyErr_Occurred())) __PYX_ERR(0, 19, __pyx_L1_error)
-  __pyx_t_3 = __Pyx_PyObject_IsTrue(__pyx_v_motor_on); if (unlikely((__pyx_t_3 == ((bool)-1)) && PyErr_Occurred())) __PYX_ERR(0, 19, __pyx_L1_error)
-  __pyx_t_4 = __pyx_convert_vector_to_py_int(__pyx_v_self->thisptr->motor_command(__pyx_t_1, __pyx_t_2, __pyx_t_3)); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 19, __pyx_L1_error)
+  __pyx_t_1 = __pyx_convert_vector_from_py_int(__pyx_v_throttle); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 22, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_IsTrue(__pyx_v_motor_warmup); if (unlikely((__pyx_t_2 == ((bool)-1)) && PyErr_Occurred())) __PYX_ERR(0, 22, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_IsTrue(__pyx_v_motor_on); if (unlikely((__pyx_t_3 == ((bool)-1)) && PyErr_Occurred())) __PYX_ERR(0, 22, __pyx_L1_error)
+  __pyx_t_4 = __pyx_convert_vector_to_py_int(__pyx_v_self->thisptr->motor_command(__pyx_t_1, __pyx_t_2, __pyx_t_3)); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 22, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __pyx_r = __pyx_t_4;
   __pyx_t_4 = 0;
   goto __pyx_L0;
 
-  /* "MoTest.pyx":18
- *     def __dealloc__(self):
- *         del self.thisptr
+  /* "MoTest.pyx":21
+ *     def motor_test(self,motor_id, throttle):
+ *         self.thisptr.single_motor_test(motor_id, throttle)
  *     def motor_command(self, throttle, motor_warmup, motor_on):             # <<<<<<<<<<<<<<
  *         return self.thisptr.motor_command(throttle, motor_warmup, motor_on)
  *     def open_i2c(self):
@@ -1108,7 +1215,7 @@ static PyObject *__pyx_pf_6MoTest_7pyMotor_4motor_command(struct __pyx_obj_6MoTe
   return __pyx_r;
 }
 
-/* "MoTest.pyx":20
+/* "MoTest.pyx":23
  *     def motor_command(self, throttle, motor_warmup, motor_on):
  *         return self.thisptr.motor_command(throttle, motor_warmup, motor_on)
  *     def open_i2c(self):             # <<<<<<<<<<<<<<
@@ -1117,24 +1224,24 @@ static PyObject *__pyx_pf_6MoTest_7pyMotor_4motor_command(struct __pyx_obj_6MoTe
  */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_6MoTest_7pyMotor_7open_i2c(PyObject *__pyx_v_self, CYTHON_UNUSED PyObject *unused); /*proto*/
-static PyObject *__pyx_pw_6MoTest_7pyMotor_7open_i2c(PyObject *__pyx_v_self, CYTHON_UNUSED PyObject *unused) {
+static PyObject *__pyx_pw_6MoTest_7pyMotor_9open_i2c(PyObject *__pyx_v_self, CYTHON_UNUSED PyObject *unused); /*proto*/
+static PyObject *__pyx_pw_6MoTest_7pyMotor_9open_i2c(PyObject *__pyx_v_self, CYTHON_UNUSED PyObject *unused) {
   PyObject *__pyx_r = 0;
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("open_i2c (wrapper)", 0);
-  __pyx_r = __pyx_pf_6MoTest_7pyMotor_6open_i2c(((struct __pyx_obj_6MoTest_pyMotor *)__pyx_v_self));
+  __pyx_r = __pyx_pf_6MoTest_7pyMotor_8open_i2c(((struct __pyx_obj_6MoTest_pyMotor *)__pyx_v_self));
 
   /* function exit code */
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_6MoTest_7pyMotor_6open_i2c(struct __pyx_obj_6MoTest_pyMotor *__pyx_v_self) {
+static PyObject *__pyx_pf_6MoTest_7pyMotor_8open_i2c(struct __pyx_obj_6MoTest_pyMotor *__pyx_v_self) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("open_i2c", 0);
 
-  /* "MoTest.pyx":21
+  /* "MoTest.pyx":24
  *         return self.thisptr.motor_command(throttle, motor_warmup, motor_on)
  *     def open_i2c(self):
  *         self.thisptr.open_i2c()             # <<<<<<<<<<<<<<
@@ -1143,7 +1250,7 @@ static PyObject *__pyx_pf_6MoTest_7pyMotor_6open_i2c(struct __pyx_obj_6MoTest_py
  */
   __pyx_v_self->thisptr->open_i2c();
 
-  /* "MoTest.pyx":20
+  /* "MoTest.pyx":23
  *     def motor_command(self, throttle, motor_warmup, motor_on):
  *         return self.thisptr.motor_command(throttle, motor_warmup, motor_on)
  *     def open_i2c(self):             # <<<<<<<<<<<<<<
@@ -1158,7 +1265,7 @@ static PyObject *__pyx_pf_6MoTest_7pyMotor_6open_i2c(struct __pyx_obj_6MoTest_py
   return __pyx_r;
 }
 
-/* "MoTest.pyx":22
+/* "MoTest.pyx":25
  *     def open_i2c(self):
  *         self.thisptr.open_i2c()
  *     def get_motor_address(self):             # <<<<<<<<<<<<<<
@@ -1167,25 +1274,25 @@ static PyObject *__pyx_pf_6MoTest_7pyMotor_6open_i2c(struct __pyx_obj_6MoTest_py
  */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_6MoTest_7pyMotor_9get_motor_address(PyObject *__pyx_v_self, CYTHON_UNUSED PyObject *unused); /*proto*/
-static PyObject *__pyx_pw_6MoTest_7pyMotor_9get_motor_address(PyObject *__pyx_v_self, CYTHON_UNUSED PyObject *unused) {
+static PyObject *__pyx_pw_6MoTest_7pyMotor_11get_motor_address(PyObject *__pyx_v_self, CYTHON_UNUSED PyObject *unused); /*proto*/
+static PyObject *__pyx_pw_6MoTest_7pyMotor_11get_motor_address(PyObject *__pyx_v_self, CYTHON_UNUSED PyObject *unused) {
   PyObject *__pyx_r = 0;
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("get_motor_address (wrapper)", 0);
-  __pyx_r = __pyx_pf_6MoTest_7pyMotor_8get_motor_address(((struct __pyx_obj_6MoTest_pyMotor *)__pyx_v_self));
+  __pyx_r = __pyx_pf_6MoTest_7pyMotor_10get_motor_address(((struct __pyx_obj_6MoTest_pyMotor *)__pyx_v_self));
 
   /* function exit code */
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_6MoTest_7pyMotor_8get_motor_address(struct __pyx_obj_6MoTest_pyMotor *__pyx_v_self) {
+static PyObject *__pyx_pf_6MoTest_7pyMotor_10get_motor_address(struct __pyx_obj_6MoTest_pyMotor *__pyx_v_self) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
   __Pyx_RefNannySetupContext("get_motor_address", 0);
 
-  /* "MoTest.pyx":23
+  /* "MoTest.pyx":26
  *         self.thisptr.open_i2c()
  *     def get_motor_address(self):
  *         return self.thisptr.get_motor_address()             # <<<<<<<<<<<<<<
@@ -1193,13 +1300,13 @@ static PyObject *__pyx_pf_6MoTest_7pyMotor_8get_motor_address(struct __pyx_obj_6
  *         return self.thisptr.test(msg)
  */
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __pyx_convert_vector_to_py_int(__pyx_v_self->thisptr->get_motor_address()); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 23, __pyx_L1_error)
+  __pyx_t_1 = __pyx_convert_vector_to_py_int(__pyx_v_self->thisptr->get_motor_address()); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 26, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
   goto __pyx_L0;
 
-  /* "MoTest.pyx":22
+  /* "MoTest.pyx":25
  *     def open_i2c(self):
  *         self.thisptr.open_i2c()
  *     def get_motor_address(self):             # <<<<<<<<<<<<<<
@@ -1218,7 +1325,7 @@ static PyObject *__pyx_pf_6MoTest_7pyMotor_8get_motor_address(struct __pyx_obj_6
   return __pyx_r;
 }
 
-/* "MoTest.pyx":24
+/* "MoTest.pyx":27
  *     def get_motor_address(self):
  *         return self.thisptr.get_motor_address()
  *     def pyTest(self,msg):             # <<<<<<<<<<<<<<
@@ -1226,39 +1333,39 @@ static PyObject *__pyx_pf_6MoTest_7pyMotor_8get_motor_address(struct __pyx_obj_6
  */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_6MoTest_7pyMotor_11pyTest(PyObject *__pyx_v_self, PyObject *__pyx_v_msg); /*proto*/
-static PyObject *__pyx_pw_6MoTest_7pyMotor_11pyTest(PyObject *__pyx_v_self, PyObject *__pyx_v_msg) {
+static PyObject *__pyx_pw_6MoTest_7pyMotor_13pyTest(PyObject *__pyx_v_self, PyObject *__pyx_v_msg); /*proto*/
+static PyObject *__pyx_pw_6MoTest_7pyMotor_13pyTest(PyObject *__pyx_v_self, PyObject *__pyx_v_msg) {
   PyObject *__pyx_r = 0;
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("pyTest (wrapper)", 0);
-  __pyx_r = __pyx_pf_6MoTest_7pyMotor_10pyTest(((struct __pyx_obj_6MoTest_pyMotor *)__pyx_v_self), ((PyObject *)__pyx_v_msg));
+  __pyx_r = __pyx_pf_6MoTest_7pyMotor_12pyTest(((struct __pyx_obj_6MoTest_pyMotor *)__pyx_v_self), ((PyObject *)__pyx_v_msg));
 
   /* function exit code */
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_6MoTest_7pyMotor_10pyTest(struct __pyx_obj_6MoTest_pyMotor *__pyx_v_self, PyObject *__pyx_v_msg) {
+static PyObject *__pyx_pf_6MoTest_7pyMotor_12pyTest(struct __pyx_obj_6MoTest_pyMotor *__pyx_v_self, PyObject *__pyx_v_msg) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   std::vector<int>  __pyx_t_1;
   PyObject *__pyx_t_2 = NULL;
   __Pyx_RefNannySetupContext("pyTest", 0);
 
-  /* "MoTest.pyx":25
+  /* "MoTest.pyx":28
  *         return self.thisptr.get_motor_address()
  *     def pyTest(self,msg):
  *         return self.thisptr.test(msg)             # <<<<<<<<<<<<<<
  */
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __pyx_convert_vector_from_py_int(__pyx_v_msg); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 25, __pyx_L1_error)
-  __pyx_t_2 = __pyx_convert_vector_to_py_int(__pyx_v_self->thisptr->test(__pyx_t_1)); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 25, __pyx_L1_error)
+  __pyx_t_1 = __pyx_convert_vector_from_py_int(__pyx_v_msg); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 28, __pyx_L1_error)
+  __pyx_t_2 = __pyx_convert_vector_to_py_int(__pyx_v_self->thisptr->test(__pyx_t_1)); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 28, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __pyx_r = __pyx_t_2;
   __pyx_t_2 = 0;
   goto __pyx_L0;
 
-  /* "MoTest.pyx":24
+  /* "MoTest.pyx":27
  *     def get_motor_address(self):
  *         return self.thisptr.get_motor_address()
  *     def pyTest(self,msg):             # <<<<<<<<<<<<<<
@@ -1487,10 +1594,11 @@ static void __pyx_tp_dealloc_6MoTest_pyMotor(PyObject *o) {
 }
 
 static PyMethodDef __pyx_methods_6MoTest_pyMotor[] = {
-  {"motor_command", (PyCFunction)__pyx_pw_6MoTest_7pyMotor_5motor_command, METH_VARARGS|METH_KEYWORDS, 0},
-  {"open_i2c", (PyCFunction)__pyx_pw_6MoTest_7pyMotor_7open_i2c, METH_NOARGS, 0},
-  {"get_motor_address", (PyCFunction)__pyx_pw_6MoTest_7pyMotor_9get_motor_address, METH_NOARGS, 0},
-  {"pyTest", (PyCFunction)__pyx_pw_6MoTest_7pyMotor_11pyTest, METH_O, 0},
+  {"motor_test", (PyCFunction)__pyx_pw_6MoTest_7pyMotor_5motor_test, METH_VARARGS|METH_KEYWORDS, 0},
+  {"motor_command", (PyCFunction)__pyx_pw_6MoTest_7pyMotor_7motor_command, METH_VARARGS|METH_KEYWORDS, 0},
+  {"open_i2c", (PyCFunction)__pyx_pw_6MoTest_7pyMotor_9open_i2c, METH_NOARGS, 0},
+  {"get_motor_address", (PyCFunction)__pyx_pw_6MoTest_7pyMotor_11get_motor_address, METH_NOARGS, 0},
+  {"pyTest", (PyCFunction)__pyx_pw_6MoTest_7pyMotor_13pyTest, METH_O, 0},
   {0, 0, 0, 0}
 };
 
@@ -1577,6 +1685,7 @@ static struct PyModuleDef __pyx_moduledef = {
 static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s_address, __pyx_k_address, sizeof(__pyx_k_address), 0, 0, 1, 1},
   {&__pyx_n_s_main, __pyx_k_main, sizeof(__pyx_k_main), 0, 0, 1, 1},
+  {&__pyx_n_s_motor_id, __pyx_k_motor_id, sizeof(__pyx_k_motor_id), 0, 0, 1, 1},
   {&__pyx_n_s_motor_on, __pyx_k_motor_on, sizeof(__pyx_k_motor_on), 0, 0, 1, 1},
   {&__pyx_n_s_motor_warmup, __pyx_k_motor_warmup, sizeof(__pyx_k_motor_warmup), 0, 0, 1, 1},
   {&__pyx_n_s_range, __pyx_k_range, sizeof(__pyx_k_range), 0, 0, 1, 1},
@@ -1689,9 +1798,9 @@ PyMODINIT_FUNC PyInit_MoTest(void)
   /*--- Variable export code ---*/
   /*--- Function export code ---*/
   /*--- Type init code ---*/
-  if (PyType_Ready(&__pyx_type_6MoTest_pyMotor) < 0) __PYX_ERR(0, 12, __pyx_L1_error)
+  if (PyType_Ready(&__pyx_type_6MoTest_pyMotor) < 0) __PYX_ERR(0, 13, __pyx_L1_error)
   __pyx_type_6MoTest_pyMotor.tp_print = 0;
-  if (PyObject_SetAttrString(__pyx_m, "pyMotor", (PyObject *)&__pyx_type_6MoTest_pyMotor) < 0) __PYX_ERR(0, 12, __pyx_L1_error)
+  if (PyObject_SetAttrString(__pyx_m, "pyMotor", (PyObject *)&__pyx_type_6MoTest_pyMotor) < 0) __PYX_ERR(0, 13, __pyx_L1_error)
   __pyx_ptype_6MoTest_pyMotor = &__pyx_type_6MoTest_pyMotor;
   /*--- Type import code ---*/
   /*--- Variable import code ---*/
