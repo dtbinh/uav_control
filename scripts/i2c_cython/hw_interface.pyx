@@ -20,7 +20,7 @@ cdef class pyMotor:
     def rotateMotors(self, motor, throttle, motor_on):
         # self.thisptr.rotateMotors(motor, throttle, motor_on)
         pass
-    def motor_test(self,motor_id, throttle):
+    def motor_test(self, int motor_id, throttle):
         self.thisptr.single_motor_test(motor_id, throttle)
     def motor_command(self, throttle, motor_on):
         return self.thisptr.motor_command(throttle, motor_on)

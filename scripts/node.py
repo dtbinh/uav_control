@@ -11,7 +11,7 @@ from i2c_cython.hw_interface import pyMotor
 
 class uav(object):
 
-    def __init__(self):
+    def __init__(self, motor_address = None):
         rospy.init_node('uav')
         self.uav_pose = rospy.Subscriber('/vicon/Jetson/pose',PoseStamped, self.mocap_sub)
         self.uav_w = rospy.Subscriber('imu/imu',Imu, self.imu_sub)
@@ -31,8 +31,8 @@ class uav(object):
         self.controller = Controller(J,e3)
         self.F = None
         self.M = None
-
-        self.hw_interface = pyMotor([44,42,42,43])
+        if motor_address != None:
+            self.hw_interface = pyMotor(motor_address)
         rospy.spin()
 
     def mocap_sub(self, msg):
@@ -61,4 +61,4 @@ class uav(object):
 
 if __name__ == '__main__':
     print('starting tf_subscriber node')
-    uav_test = uav()
+    uav_test = uav([44,41,42,43])

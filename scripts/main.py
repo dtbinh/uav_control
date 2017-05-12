@@ -7,163 +7,163 @@ import numpy.linalg as la
 import pdb
 import matplotlib.pyplot as plt
 # import mpl_toolkits.mplot3d.axes3d as p3
-# import matplotlib.animation as animation
+import matplotlib.animation as animation
 import sys
 # import seaborn as sns
-from mayavi import mlab
-import trimesh
+# from mayavi import mlab
+# import trimesh
 
 
 class UAV(object):
 
-  def __init__(self, J, e3):
-    self.m = 4.34
-    self.g = 9.81
-    self.J = J
-    self.e3 = e3
-    self.kR = 8.81; # attitude gains
-    self.kW = 2.54; # attitude gains
-    self.kx = 16.*self.m # position gains
-    self.kv = 5.6*self.m # position gains
-    print('UAV: initialized')
+    def __init__(self, J, e3):
+        self.m = 4.34
+        self.g = 9.81
+        self.J = J
+        self.e3 = e3
+        self.kR = 8.81; # attitude gains
+        self.kW = 2.54; # attitude gains
+        self.kx = 16.*self.m # position gains
+        self.kv = 5.6*self.m # position gains
+        print('UAV: initialized')
 
-  def dydt(self, t, X):
-    R = np.reshape(X[0:9],(3,3));  # rotation from body to inertial
-    W = X[9:12];   # angular rate
-    x = X[12:15];  # position
-    v = X[15:];    # velocity
+    def dydt(self, t, X):
+        R = np.reshape(X[0:9],(3,3));  # rotation from body to inertial
+        W = X[9:12];   # angular rate
+        x = X[12:15];  # position
+        v = X[15:];    # velocity
 
-    xd = np.array([0, 0, 0])
-    xd_dot = np.array([0, 0, 0])
-    xd_ddot = np.array([0, 0, 0])
-    xd_dddot = np.array([0, 0, 0])
-    xd_ddddot = np.array([0, 0, 0])
-    b1d = np.array([1., 0., 0.])
-    b1d_dot=np.array([0., 0., 0.])
-    b1d_ddot=np.array([0., 0., 0.])
-    Rd = np.eye(3)
-    Wd = np.array([0.,0.,0.])
-    Wd_dot = np.array([0.,0.,0.])
-    f = np.array([0,0,0])
-    M = np.array([0,0,0])
+        xd = np.array([0, 0, 0])
+        xd_dot = np.array([0, 0, 0])
+        xd_ddot = np.array([0, 0, 0])
+        xd_dddot = np.array([0, 0, 0])
+        xd_ddddot = np.array([0, 0, 0])
+        b1d = np.array([1., 0., 0.])
+        b1d_dot=np.array([0., 0., 0.])
+        b1d_ddot=np.array([0., 0., 0.])
+        Rd = np.eye(3)
+        Wd = np.array([0.,0.,0.])
+        Wd_dot = np.array([0.,0.,0.])
+        f = np.array([0,0,0])
+        M = np.array([0,0,0])
 
-    if t < 4:
-      xd_dot = np.array([1.+ 0.5*t, 0.2*np.sin(2*np.pi*t), -0.1])
-      b1d = np.array([1., 0.,0.])
-      d_in = (xd, xd_dot, xd_ddot, xd_dddot, xd_ddddot, 
-              b1d, b1d_dot, b1d_ddot, Rd, Wd, Wd_dot)
-      (f, M) = self.velocity_control(t, R, W, x, v, d_in)
-    elif t < 6:
-      xd = np.array([8.,0.,0.])
-      ang_d=2.*np.pi*(t-4)
-      ang_d_dot=2.*np.pi
-      Rd = np.array([[np.cos(ang_d), 0., np.sin(ang_d)],[0.,1.,0.],
-          [-np.sin(ang_d), 0., np.cos(ang_d)]])
-      Rd_dot = np.array([[-ang_d_dot*np.sin(ang_d), 0., 
-          ang_d_dot*np.cos(ang_d)],[0.,0.,0.],
-          [-ang_d_dot*np.cos(ang_d), 0., -ang_d_dot*np.sin(ang_d)]])
-      Wdhat=Rd.T.dot(Rd_dot)
-      Wd=np.array([-Wdhat[1,2],Wdhat[0,2],-Wdhat[0,1]])
-      b1d = Rd[:,0]
-      b1d_dot = Rd_dot[:,0]
-      d_in = (xd, xd_dot, xd_ddot, xd_dddot, xd_ddddot, 
-              b1d, b1d_dot, b1d_ddot, Rd, Wd, Wd_dot)
-      (f, M) = self.attitude_control(t, R, W, x, v, d_in)
-    elif t < 8:
-      xd = np.array([14. - t, 0, 0])
-      xd_dot = np.array([-1 , 0, 0])
-      b1d = np.array([1., 0,0])
-      d_in = (xd, xd_dot, xd_ddot, xd_dddot, xd_ddddot, 
-              b1d, b1d_dot, b1d_ddot, Rd, Wd, Wd_dot)
-      (f, M) = self.position_control(t, R, W, x, v, d_in)
-    elif t < 9:
-      xd = np.array([6.,0.,0.])
-      ang_d=2.*np.pi*(t-8)
-      ang_d_dot=2.*np.pi
-      Rd = np.array([[1.,0.,0.],[0, np.cos(ang_d), -np.sin(ang_d)],
-          [0,np.sin(ang_d), np.cos(ang_d)]])
-      Rd_dot = np.array([[0,0,0],[0,-ang_d_dot*np.sin(ang_d),
-          -ang_d_dot*np.cos(ang_d)],
-          [0,ang_d_dot*np.cos(ang_d), -ang_d_dot*np.sin(ang_d)]])
-      Wdhat=Rd.T.dot(Rd_dot)
-      Wd=np.array([-Wdhat[1,2],Wdhat[0,2],-Wdhat[0,1]])
-      b1d = Rd[:,0]
-      b1d_dot = Rd_dot[:,0]
-      d_in = (xd, xd_dot, xd_ddot, xd_dddot, xd_ddddot, 
-              b1d, b1d_dot, b1d_ddot, Rd, Wd, Wd_dot)
-      (f, M) = self.attitude_control(t, R, W, x, v, d_in)
-    elif t < 12:
-      xd = np.array([20. - 5./3*t, 0, 0])
-      xd_dot = np.array([-5./3 , 0, 0])
-      b1d = np.array([0., 1.,0.])
-      d_in = (xd, xd_dot, xd_ddot, xd_dddot, xd_ddddot, 
-              b1d, b1d_dot, b1d_ddot, Rd, Wd, Wd_dot)
-      (f, M) = self.position_control(t, R, W, x, v, d_in)
+        if t < 4:
+            xd_dot = np.array([1.+ 0.5*t, 0.2*np.sin(2*np.pi*t), -0.1])
+            b1d = np.array([1., 0.,0.])
+            d_in = (xd, xd_dot, xd_ddot, xd_dddot, xd_ddddot, 
+                    b1d, b1d_dot, b1d_ddot, Rd, Wd, Wd_dot)
+            (f, M) = self.velocity_control(t, R, W, x, v, d_in)
+        elif t < 6:
+            xd = np.array([8.,0.,0.])
+            ang_d=2.*np.pi*(t-4)
+            ang_d_dot=2.*np.pi
+            Rd = np.array([[np.cos(ang_d), 0., np.sin(ang_d)],[0.,1.,0.],
+                [-np.sin(ang_d), 0., np.cos(ang_d)]])
+            Rd_dot = np.array([[-ang_d_dot*np.sin(ang_d), 0., 
+                ang_d_dot*np.cos(ang_d)],[0.,0.,0.],
+                [-ang_d_dot*np.cos(ang_d), 0., -ang_d_dot*np.sin(ang_d)]])
+            Wdhat=Rd.T.dot(Rd_dot)
+            Wd=np.array([-Wdhat[1,2],Wdhat[0,2],-Wdhat[0,1]])
+            b1d = Rd[:,0]
+            b1d_dot = Rd_dot[:,0]
+            d_in = (xd, xd_dot, xd_ddot, xd_dddot, xd_ddddot, 
+                    b1d, b1d_dot, b1d_ddot, Rd, Wd, Wd_dot)
+            (f, M) = self.attitude_control(t, R, W, x, v, d_in)
+        elif t < 8:
+            xd = np.array([14. - t, 0, 0])
+            xd_dot = np.array([-1 , 0, 0])
+            b1d = np.array([1., 0,0])
+            d_in = (xd, xd_dot, xd_ddot, xd_dddot, xd_ddddot, 
+                    b1d, b1d_dot, b1d_ddot, Rd, Wd, Wd_dot)
+            (f, M) = self.position_control(t, R, W, x, v, d_in)
+        elif t < 9:
+            xd = np.array([6.,0.,0.])
+            ang_d=2.*np.pi*(t-8)
+            ang_d_dot=2.*np.pi
+            Rd = np.array([[1.,0.,0.],[0, np.cos(ang_d), -np.sin(ang_d)],
+                [0,np.sin(ang_d), np.cos(ang_d)]])
+            Rd_dot = np.array([[0,0,0],[0,-ang_d_dot*np.sin(ang_d),
+                -ang_d_dot*np.cos(ang_d)],
+                [0,ang_d_dot*np.cos(ang_d), -ang_d_dot*np.sin(ang_d)]])
+            Wdhat=Rd.T.dot(Rd_dot)
+            Wd=np.array([-Wdhat[1,2],Wdhat[0,2],-Wdhat[0,1]])
+            b1d = Rd[:,0]
+            b1d_dot = Rd_dot[:,0]
+            d_in = (xd, xd_dot, xd_ddot, xd_dddot, xd_ddddot, 
+                    b1d, b1d_dot, b1d_ddot, Rd, Wd, Wd_dot)
+            (f, M) = self.attitude_control(t, R, W, x, v, d_in)
+        elif t < 12:
+            xd = np.array([20. - 5./3*t, 0, 0])
+            xd_dot = np.array([-5./3 , 0, 0])
+            b1d = np.array([0., 1.,0.])
+            d_in = (xd, xd_dot, xd_ddot, xd_dddot, xd_ddddot, 
+                    b1d, b1d_dot, b1d_ddot, Rd, Wd, Wd_dot)
+            (f, M) = self.position_control(t, R, W, x, v, d_in)
 
-    R_dot = np.dot(R,hat(W))
-    W_dot = np.dot(la.inv(self.J), M - np.cross(W, np.dot(self.J, W)))
-    x_dot = v
-    v_dot = self.g*self.e3 - f*R.dot(self.e3)/self.m
-    X_dot = np.concatenate((R_dot.flatten(), W_dot, x_dot, v_dot))
-    return X_dot
+        R_dot = np.dot(R,hat(W))
+        W_dot = np.dot(la.inv(self.J), M - np.cross(W, np.dot(self.J, W)))
+        x_dot = v
+        v_dot = self.g*self.e3 - f*R.dot(self.e3)/self.m
+        X_dot = np.concatenate((R_dot.flatten(), W_dot, x_dot, v_dot))
+        return X_dot
 
-  def position_control(self, t, R, W, x, v, d_in):
-    (xd, xd_dot, xd_2dot, xd_3dot, xd_4dot, b1d, b1d_dot, b1d_ddot, Rd, Wd, Wd_dot) = d_in
-    (ex, ev) = position_errors( x, xd, v, xd_dot)
+    def position_control(self, t, R, W, x, v, d_in):
+        (xd, xd_dot, xd_2dot, xd_3dot, xd_4dot, b1d, b1d_dot, b1d_ddot, Rd, Wd, Wd_dot) = d_in
+        (ex, ev) = position_errors( x, xd, v, xd_dot)
 
-    f = np.dot(self.kx*ex + self.kv*ev + self.m*self.g*self.e3 - self.m*xd_2dot, R.dot(self.e3) )
-    W_hat = hat(W)
-    R_dot = R.dot(W_hat)
-    x_2dot = self.g*self.e3 - f*R.dot(self.e3)/self.m
-    ex_2dot = x_2dot - xd_2dot
+        f = np.dot(self.kx*ex + self.kv*ev + self.m*self.g*self.e3 - self.m*xd_2dot, R.dot(self.e3) )
+        W_hat = hat(W)
+        R_dot = R.dot(W_hat)
+        x_2dot = self.g*self.e3 - f*R.dot(self.e3)/self.m
+        ex_2dot = x_2dot - xd_2dot
 
-    f_dot = ( self.kx*ev + self.kv*ex_2dot - self.m*xd_3dot).dot(R.dot(self.e3)) + ( self.kx*ex + self.kv*ev + self.m*self.g*self.e3 - self.m*xd_3dot).dot(np.dot(R_dot,self.e3))
+        f_dot = ( self.kx*ev + self.kv*ex_2dot - self.m*xd_3dot).dot(R.dot(self.e3)) + ( self.kx*ex + self.kv*ev + self.m*self.g*self.e3 - self.m*xd_3dot).dot(np.dot(R_dot,self.e3))
 
-    x_3dot = -1/self.m*( f_dot*R + f*R_dot ).dot(self.e3)
-    ex_3dot = x_3dot - xd_3dot
+        x_3dot = -1/self.m*( f_dot*R + f*R_dot ).dot(self.e3)
+        ex_3dot = x_3dot - xd_3dot
 
-    A = -self.kx*ex - self.kv*ev - self.m*self.g*self.e3 + self.m*xd_2dot
-    A_dot = -self.kx*ev - self.kv*ex_2dot + self.m*xd_3dot
-    A_2dot = -self.kx*ex_2dot - self.kv*ex_3dot + self.m*xd_4dot
+        A = -self.kx*ex - self.kv*ev - self.m*self.g*self.e3 + self.m*xd_2dot
+        A_dot = -self.kx*ev - self.kv*ex_2dot + self.m*xd_3dot
+        A_2dot = -self.kx*ex_2dot - self.kv*ex_3dot + self.m*xd_4dot
 
-    (Rd, Wd, Wd_dot) = get_Rc(A, A_dot, A_2dot , b1d, b1d_dot, b1d_ddot)
+        (Rd, Wd, Wd_dot) = get_Rc(A, A_dot, A_2dot , b1d, b1d_dot, b1d_ddot)
 
-    (eR, eW) = attitude_errors( R, Rd, W, Wd )
-    M= -self.kR*eR - self.kW*eW + np.cross(W, self.J.dot(W)) - self.J.dot(W_hat.dot(R.T.dot(Rd.dot(Wd))) - R.T.dot(Rd.dot(Wd_dot)))
-    return (f, M)
+        (eR, eW) = attitude_errors( R, Rd, W, Wd )
+        M= -self.kR*eR - self.kW*eW + np.cross(W, self.J.dot(W)) - self.J.dot(W_hat.dot(R.T.dot(Rd.dot(Wd))) - R.T.dot(Rd.dot(Wd_dot)))
+        return (f, M)
 
-  def velocity_control(self, t, R, W, x, v, d_in):
-    (xd, xd_dot, xd_2dot, xd_3dot, xd_4dot, b1d, b1d_dot, b1d_ddot, Rd, Wd, Wd_dot) = d_in
-    (ex, ev) = position_errors( x, xd, v, xd_dot)
+    def velocity_control(self, t, R, W, x, v, d_in):
+        (xd, xd_dot, xd_2dot, xd_3dot, xd_4dot, b1d, b1d_dot, b1d_ddot, Rd, Wd, Wd_dot) = d_in
+        (ex, ev) = position_errors( x, xd, v, xd_dot)
 
-    f = (self.kx*ev + self.m*self.g*self.e3 - self.m*xd_2dot).dot(R.dot(self.e3))
-    W_hat = hat(W)
-    R_dot = R.dot(W_hat)
-    x_2dot = self.g*self.e3 - f*R.dot(self.e3)/self.m
-    ex_2dot = x_2dot - xd_2dot
+        f = (self.kx*ev + self.m*self.g*self.e3 - self.m*xd_2dot).dot(R.dot(self.e3))
+        W_hat = hat(W)
+        R_dot = R.dot(W_hat)
+        x_2dot = self.g*self.e3 - f*R.dot(self.e3)/self.m
+        ex_2dot = x_2dot - xd_2dot
 
-    f_dot = ( self.kx*ex_2dot - self.m*xd_3dot).dot(R.dot(self.e3)) + ( self.kx*ev + self.m*self.g*self.e3 - self.m*xd_3dot).dot(np.dot(R_dot,self.e3))
+        f_dot = ( self.kx*ex_2dot - self.m*xd_3dot).dot(R.dot(self.e3)) + ( self.kx*ev + self.m*self.g*self.e3 - self.m*xd_3dot).dot(np.dot(R_dot,self.e3))
 
-    x_3dot = -1/self.m*( f_dot*R + f*R_dot ).dot(self.e3)
-    ex_3dot = x_3dot - xd_3dot
+        x_3dot = -1/self.m*( f_dot*R + f*R_dot ).dot(self.e3)
+        ex_3dot = x_3dot - xd_3dot
 
-    A = - self.kv*ev - self.m*self.g*e3 + self.m*xd_2dot
-    A_dot = - self.kv*ex_2dot + self.m*xd_3dot
-    A_2dot = - self.kv*ex_3dot + self.m*xd_4dot
+        A = - self.kv*ev - self.m*self.g*e3 + self.m*xd_2dot
+        A_dot = - self.kv*ex_2dot + self.m*xd_3dot
+        A_2dot = - self.kv*ex_3dot + self.m*xd_4dot
 
-    (Rd, Wd, Wd_dot) = get_Rc(A, A_dot, A_2dot , b1d, b1d_dot, b1d_ddot)
-    (eR, eW) = attitude_errors( R, Rd, W, Wd )
-    M= -self.kR*eR - self.kW*eW + np.cross(W, self.J.dot(W)) - self.J.dot(W_hat.dot(R.T.dot(Rd.dot(Wd))) - R.T.dot(Rd.dot(Wd_dot)))
-    return (f, M)
+        (Rd, Wd, Wd_dot) = get_Rc(A, A_dot, A_2dot , b1d, b1d_dot, b1d_ddot)
+        (eR, eW) = attitude_errors( R, Rd, W, Wd )
+        M= -self.kR*eR - self.kW*eW + np.cross(W, self.J.dot(W)) - self.J.dot(W_hat.dot(R.T.dot(Rd.dot(Wd))) - R.T.dot(Rd.dot(Wd_dot)))
+        return (f, M)
 
-  def attitude_control(self, t, R, W, x, v, d_in):
-    (xd, xd_dot, xd_ddot, xd_dddot, xd_ddddot, b1d, b1d_dot, b1d_ddot, Rd, Wd, Wd_dot) = d_in
-    (ex, ev) = position_errors( x, xd, v, xd_dot)
-    f = (self.kx*ex + self.kv*v + self.m*self.g*self.e3).dot(R.dot(self.e3))
-    W_hat = hat(W)
-    (eR, eW) = attitude_errors( R, Rd, W, Wd )
-    M= -self.kR*eR - self.kW*eW + np.cross(W, self.J.dot(W)) - self.J.dot(W_hat.dot(R.T.dot(Rd.dot(Wd))) - R.T.dot(Rd.dot(Wd_dot)))
-    return (f, M)
+    def attitude_control(self, t, R, W, x, v, d_in):
+        (xd, xd_dot, xd_ddot, xd_dddot, xd_ddddot, b1d, b1d_dot, b1d_ddot, Rd, Wd, Wd_dot) = d_in
+        (ex, ev) = position_errors( x, xd, v, xd_dot)
+        f = (self.kx*ex + self.kv*v + self.m*self.g*self.e3).dot(R.dot(self.e3))
+        W_hat = hat(W)
+        (eR, eW) = attitude_errors( R, Rd, W, Wd )
+        M= -self.kR*eR - self.kW*eW + np.cross(W, self.J.dot(W)) - self.J.dot(W_hat.dot(R.T.dot(Rd.dot(Wd))) - R.T.dot(Rd.dot(Wd_dot)))
+        return (f, M)
 
 def get_Rc(A, A_dot, A_2dot, b1d, b1d_dot, b1d_ddot):
     # move this as a function
@@ -197,90 +197,90 @@ def get_Rc(A, A_dot, A_2dot, b1d, b1d_dot, b1d_ddot):
     return (Rc, Wc, Wc_dot)
 
 def vee(M):
-  return np.array([M[2,1], M[0,2], M[1,0]])
+    return np.array([M[2,1], M[0,2], M[1,0]])
 
 def flight_mode_transition(t):
-  xd = np.array([0, 0, 0])
-  xd_dot = np.array([0, 0, 0])
-  xd_ddot = np.array([0, 0, 0])
-  xd_dddot = np.array([0, 0, 0])
-  xd_ddddot = np.array([0, 0, 0])
-  b1d = np.array([1., 0., 0.])
-  b1d_dot=np.array([0., 0., 0.])
-  b1d_ddot=np.array([0., 0., 0.])
-  Rd = np.eye(3)
-  Wd = np.array([0.,0.,0.])
-  Wd_dot = np.array([0.,0.,0.])
+    xd = np.array([0, 0, 0])
+    xd_dot = np.array([0, 0, 0])
+    xd_ddot = np.array([0, 0, 0])
+    xd_dddot = np.array([0, 0, 0])
+    xd_ddddot = np.array([0, 0, 0])
+    b1d = np.array([1., 0., 0.])
+    b1d_dot=np.array([0., 0., 0.])
+    b1d_ddot=np.array([0., 0., 0.])
+    Rd = np.eye(3)
+    Wd = np.array([0.,0.,0.])
+    Wd_dot = np.array([0.,0.,0.])
 
-  if t < 4:
-    xd_dot = np.array([1.+ 0.5*t, -0.2*np.sin(2*np.pi*t), 0.1])
-    b1d = np.array([1., 0.,0.])
-  elif t < 6:
-    ang_d=2.*np.pi*(t-4)
-    ang_d_dot=2.*np.pi
+    if t < 4:
+        xd_dot = np.array([1.+ 0.5*t, -0.2*np.sin(2*np.pi*t), 0.1])
+        b1d = np.array([1., 0.,0.])
+    elif t < 6:
+        ang_d=2.*np.pi*(t-4)
+        ang_d_dot=2.*np.pi
+        Rd = np.array([[np.cos(ang_d), 0., np.sin(ang_d)],[0.,1.,0.],[-np.sin(ang_d), 0., np.cos(ang_d)]])
+        Rd_dot = np.array([[-ang_d_dot*np.sin(ang_d), 0., ang_d_dot*np.cos(ang_d)],[0.,0.,0.],[-ang_d_dot*np.cos(ang_d), 0., -ang_d_dot*np.sin(ang_d)]])
+        Wdhat=Rd.T.dot(Rd_dot)
+        Wd=np.array([-Wdhat[1,2],Wdhat[0,2],-Wdhat[0,1]])
+        b1d = Rd[:,0]
+        b1d_dot = Rd_dot[:,0]
+        # xd = np.array([0., 0., 6.6])
+
+        # elif t < 8:
+        #   xd = np.array([14. - t, 0, 0])
+        #   xd_dot = np.array([-1 , 0, 0])
+        #   b1d = np.array([1., 0,0])
+        # elif t < 9:
+        #   pass
+    return (xd, xd_dot, xd_ddot, xd_dddot, xd_ddddot, b1d, b1d_dot, b1d_ddot, Rd, Wd, Wd_dot)
+
+
+def desired_position(t):
+    xd = np.array([0, 0, 0])
+    xd_dot = np.array([0, 0, 0])
+    xd_ddot = np.array([0, 0, 0])
+    xd_dddot = np.array([0, 0, 0])
+    xd_ddddot = np.array([0, 0, 0])
+    b1d = np.array([1, 0, 0])
+    b1d_dot=np.array([0, 0, 0])
+    b1d_ddot=np.array([0, 0, 0])
+    return (xd, xd_dot, xd_ddot, xd_dddot, xd_ddddot, b1d, b1d_dot, b1d_ddot)
+
+def desired_attitude(t):
+    ang_d=2*np.pi*(t)
+    ang_d_dot=2*np.pi
     Rd = np.array([[np.cos(ang_d), 0., np.sin(ang_d)],[0.,1.,0.],[-np.sin(ang_d), 0., np.cos(ang_d)]])
     Rd_dot = np.array([[-ang_d_dot*np.sin(ang_d), 0., ang_d_dot*np.cos(ang_d)],[0.,0.,0.],[-ang_d_dot*np.cos(ang_d), 0., -ang_d_dot*np.sin(ang_d)]])
     Wdhat=Rd.T.dot(Rd_dot)
     Wd=np.array([-Wdhat[1,2],Wdhat[0,2],-Wdhat[0,1]])
-    b1d = Rd[:,0]
-    b1d_dot = Rd_dot[:,0]
-    # xd = np.array([0., 0., 6.6])
-
-  # elif t < 8:
-  #   xd = np.array([14. - t, 0, 0])
-  #   xd_dot = np.array([-1 , 0, 0])
-  #   b1d = np.array([1., 0,0])
-  # elif t < 9:
-  #   pass
-  return (xd, xd_dot, xd_ddot, xd_dddot, xd_ddddot, b1d, b1d_dot, b1d_ddot, Rd, Wd, Wd_dot)
-
-
-def desired_position(t):
-  xd = np.array([0, 0, 0])
-  xd_dot = np.array([0, 0, 0])
-  xd_ddot = np.array([0, 0, 0])
-  xd_dddot = np.array([0, 0, 0])
-  xd_ddddot = np.array([0, 0, 0])
-  b1d = np.array([1, 0, 0])
-  b1d_dot=np.array([0, 0, 0])
-  b1d_ddot=np.array([0, 0, 0])
-  return (xd, xd_dot, xd_ddot, xd_dddot, xd_ddddot, b1d, b1d_dot, b1d_ddot)
-
-def desired_attitude(t):
-  ang_d=2*np.pi*(t)
-  ang_d_dot=2*np.pi
-  Rd = np.array([[np.cos(ang_d), 0., np.sin(ang_d)],[0.,1.,0.],[-np.sin(ang_d), 0., np.cos(ang_d)]])
-  Rd_dot = np.array([[-ang_d_dot*np.sin(ang_d), 0., ang_d_dot*np.cos(ang_d)],[0.,0.,0.],[-ang_d_dot*np.cos(ang_d), 0., -ang_d_dot*np.sin(ang_d)]])
-  Wdhat=Rd.T.dot(Rd_dot)
-  Wd=np.array([-Wdhat[1,2],Wdhat[0,2],-Wdhat[0,1]])
-  Wd_dot = np.array([0.,0.,0.])
-  return (Rd, Wd, Wd_dot)
+    Wd_dot = np.array([0.,0.,0.])
+    return (Rd, Wd, Wd_dot)
 
 def attitude_errors( R, Rd, W, Wd ):
-  eR = 0.5*vee(Rd.T.dot(R) - R.T.dot(Rd))
-  eW = W - R.T.dot(Rd.dot(Wd))
-  return (eR, eW)
+    eR = 0.5*vee(Rd.T.dot(R) - R.T.dot(Rd))
+    eW = W - R.T.dot(Rd.dot(Wd))
+    return (eR, eW)
 
 def position_errors(x, xd, v, vd):
-  ex = x - xd
-  ev = v - vd
-  return (ex, ev)
+    ex = x - xd
+    ev = v - vd
+    return (ex, ev)
 
 def rot_eul(x_in):
-  theta_x = np.arctan2(x_in[:,7], x_in[:,8])
-  theta_y = np.arctan2(x_in[:,6], (x_in[:,7]**2+x_in[:,8]**2)**(1/2))
-  theta_z = np.arctan2(x_in[:,1], x_in[:,0])
-  return np.array([theta_x,theta_y,theta_z]).T
+    theta_x = np.arctan2(x_in[:,7], x_in[:,8])
+    theta_y = np.arctan2(x_in[:,6], (x_in[:,7]**2+x_in[:,8]**2)**(1/2))
+    theta_z = np.arctan2(x_in[:,1], x_in[:,0])
+    return np.array([theta_x,theta_y,theta_z]).T
 
 def hat(x):
-  hat_x = [0, -x[2], x[1],
-          x[2], 0, -x[0],
-          -x[1], x[0], 0]
-  return np.reshape(hat_x,(3,3))
+    hat_x = [0, -x[2], x[1],
+            x[2], 0, -x[0],
+            -x[1], x[0], 0]
+    return np.reshape(hat_x,(3,3))
 
 
 if __name__ == "__main__":
-  # execute only if run as a script
+    # execute only if run as a script
   J = np.diag([0.0820, 0.0845, 0.1377])
   e3 = np.array([0.,0.,1.])
   uav_t = UAV(J, e3)
@@ -290,8 +290,8 @@ if __name__ == "__main__":
   xd = np.array([0.,0.,0.])
   # Initial Conditions
   R0 = [[1., 0., 0.],
-    [0., -0.9995, -0.0314],
-    [0., 0.0314, -0.9995]] # initial rotation
+          [0., -0.9995, -0.0314],
+          [0., 0.0314, -0.9995]] # initial rotation
   R0 = np.eye(3)
   W0 = [0.,0.,0.];   # initial angular velocity
   x0 = [0.,0.,0.];  # initial position (altitude?0)
@@ -306,8 +306,8 @@ if __name__ == "__main__":
   dt = 1./100
   sim = []
   while solver.successful() and solver.t < t_max:
-    solver.integrate(solver.t+dt)
-    sim.append(solver.y)
+      solver.integrate(solver.t+dt)
+      sim.append(solver.y)
 
   sim = np.array(sim)
 
@@ -318,7 +318,6 @@ if __name__ == "__main__":
   ys = sim[:,-5]
   zs = sim[:,-4]
 
-  
 #  plt.figure()
 #  plt.subplot(211)
 #  plt.plot(t,sim[:,-6:-3])
@@ -329,51 +328,52 @@ if __name__ == "__main__":
 #  plt.show()
 #  plt.close()
 #
-  anim_on = 1
-  if anim_on:
-    mlab.figure(bgcolor=(0.839216, 0.839216, 0.839216))
-    mlab.roll(45)
-    pt = mlab.points3d(xs[0], ys[0], zs[0],color =  (1, 0, 0), opacity=0.5, scale_factor = 0.1)
-    path = mlab.plot3d(xs,ys,zs, color = (0.541176, 0.168627, 0.886275),tube_radius = 0.01, opacity=0.5)
-
-    wx = np.linspace(-1,1,5)
-    wy = wx
-    [wx,wy] = np.meshgrid(wx,wy)
-    wz = np.zeros(wx.shape)
-    ground = mlab.mesh(wx,wy,wz,color=(0,0,0),representation='wireframe')
-
-    xaz = mlab.plot3d([xs[0], xs[0]] ,[ys[0],ys[0]],[zs[0],zs[0]],color=(0,0,1),tube_radius = 0.01)
-    xax = mlab.plot3d([xs[0], xs[0]] ,[ys[0],ys[0]],[zs[0],zs[0]],color=(1,0,0),tube_radius = 0.01)
-    xay = mlab.plot3d([xs[0], xs[0]] ,[ys[0],ys[0]],[zs[0],zs[0]],color=(0,1,0),tube_radius = 0.01)
-    # zipped = zip(xx,xy,xz)
-
-    eul_ang = rot_eul(sim)
-    # @mlab.show
-    @mlab.animate(delay=10)
-    def anim():
-        f = mlab.gcf()
-        while True:
-            i = 0
-            for (x, y, z, angle) in zip(xs, ys, zs, sim[:,:9]):
-                pt.mlab_source.set(x=x, y=y, z=z)
-                ptx = angle.reshape((3,3)).dot([1,0,0])*0.2
-                ptx = [x,y,z] + ptx
-                xax.mlab_source.set(x=[x, ptx[0]] ,y=[y,ptx[1]],z=[z, ptx[2]])
-                ptx = angle.reshape((3,3)).dot([0,1,0])*0.2
-                xay.mlab_source.set(x=[x, x + ptx[0]] ,y=[y,y+ptx[1]],z=[z,z+ptx[2]])
-                ptx = angle.reshape((3,3)).dot([0,0,1])*0.2
-                xaz.mlab_source.set(x=[x, x + ptx[0]] ,y=[y,y+ptx[1]],z=[z,z+ptx[2]])
-                f.scene.render()
-                i += 1
-                yield
-
-    # Run the animation.
-    anim()
-    mlab.show()
-
-
-
-
+  sys.exit()
+#  anim_on = 1
+#  if anim_on:
+#      mlab.figure(bgcolor=(0.839216, 0.839216, 0.839216))
+#    mlab.roll(45)
+#    pt = mlab.points3d(xs[0], ys[0], zs[0],color =  (1, 0, 0), opacity=0.5, scale_factor = 0.1)
+#    path = mlab.plot3d(xs,ys,zs, color = (0.541176, 0.168627, 0.886275),tube_radius = 0.01, opacity=0.5)
+#
+#    wx = np.linspace(-1,1,5)
+#    wy = wx
+#    [wx,wy] = np.meshgrid(wx,wy)
+#    wz = np.zeros(wx.shape)
+#    ground = mlab.mesh(wx,wy,wz,color=(0,0,0),representation='wireframe')
+#
+#    xaz = mlab.plot3d([xs[0], xs[0]] ,[ys[0],ys[0]],[zs[0],zs[0]],color=(0,0,1),tube_radius = 0.01)
+#    xax = mlab.plot3d([xs[0], xs[0]] ,[ys[0],ys[0]],[zs[0],zs[0]],color=(1,0,0),tube_radius = 0.01)
+#    xay = mlab.plot3d([xs[0], xs[0]] ,[ys[0],ys[0]],[zs[0],zs[0]],color=(0,1,0),tube_radius = 0.01)
+#    # zipped = zip(xx,xy,xz)
+#
+#    eul_ang = rot_eul(sim)
+#    # @mlab.show
+#    @mlab.animate(delay=10)
+#    def anim():
+#        f = mlab.gcf()
+#        while True:
+#            i = 0
+#            for (x, y, z, angle) in zip(xs, ys, zs, sim[:,:9]):
+#                pt.mlab_source.set(x=x, y=y, z=z)
+#                ptx = angle.reshape((3,3)).dot([1,0,0])*0.2
+#                ptx = [x,y,z] + ptx
+#                xax.mlab_source.set(x=[x, ptx[0]] ,y=[y,ptx[1]],z=[z, ptx[2]])
+#                ptx = angle.reshape((3,3)).dot([0,1,0])*0.2
+#                xay.mlab_source.set(x=[x, x + ptx[0]] ,y=[y,y+ptx[1]],z=[z,z+ptx[2]])
+#                ptx = angle.reshape((3,3)).dot([0,0,1])*0.2
+#                xaz.mlab_source.set(x=[x, x + ptx[0]] ,y=[y,y+ptx[1]],z=[z,z+ptx[2]])
+#                f.scene.render()
+#                i += 1
+#                yield
+#
+#    # Run the animation.
+#    anim()
+#    mlab.show()
+#
+#
+#
+#
   # x = np.arange(0, 2*np.pi, 0.01)
   # line, = ax.plot(sim[:,-6], sim[:,-5])
 

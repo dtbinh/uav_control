@@ -6,7 +6,7 @@ import numpy as np
 import numpy.linalg as la
 import pdb
 import sys
-import numba # use just in time compiling for speed up
+# import numba # use just in time compiling for speed up
 
 
 class Controller(object):
