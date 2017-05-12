@@ -6,6 +6,7 @@ from geometry_msgs.msg import PoseStamped
 from sensor_msgs.msg import Imu
 from controller import *
 import time
+from i2c_cython.hw_interface import pyMotor
 
 
 class uav(object):
@@ -30,7 +31,10 @@ class uav(object):
         self.controller = Controller(J,e3)
         self.F = None
         self.M = None
+
+        self.hw_interface = pyMotor([44,42,42,43])
         rospy.spin()
+
     def mocap_sub(self, msg):
         try:
             (trans,rot) = self.tf_subscriber.lookupTransform('/world', '/Jetson', rospy.Time(0))
@@ -38,15 +42,20 @@ class uav(object):
             self.R = self.tf.fromTranslationRotation(trans,rot)[:3,:3]
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
             print('No transform between vicon and UAV found')
+
     def camera_sub(self):
         pass
+
     def imu_sub(self, msg):
         w = msg.angular_velocity
         self.W = np.array([w.x,w.y,w.z])
         self.control()
+
     def control(self):
         self.F, self.M = self.controller.position_control( self.R, self.W, self.x, self.v, self.x_c)
-    def motor_command(self):
+
+    def motor_command(self, command):
+        self.hw_interface.motor_command(command, True)
         pass
 
 

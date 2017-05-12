@@ -55,7 +55,6 @@ class hw_interface{
         int length = 6;
         char buffer[6];
         vector<int> motor_status;
-
         for(int i=0;i<4;i++){
           tcflush(fhi2c, TCIOFLUSH);
 
@@ -63,7 +62,9 @@ class hw_interface{
 
           if(ioctl(fhi2c, I2C_SLAVE, motor_address[i])<0)
           printf("ERROR: ioctl\n");
-          read(fhi2c,buffer,length);
+          if(!read(fhi2c,buffer,length)){
+            printf("Motor status read Error");
+          };
           //printf("Motor:%d ",i);
           for(int k=0;k<length;k++){
             motor_status.push_back((int)((uint8_t)buffer[k]));
@@ -80,7 +81,7 @@ class hw_interface{
                 printf("ERROR: ioctl\n");
             if(MOTOR_ON == false)// set motor speed to zero
                 throttle[i] = 0;
-            while(write(fhi2c, &throttle[i], 1)!=1)
+            if(!write(fhi2c, &throttle[i], 1))
                 printf("ERROR: Motor %i I2C write command of %i to address %i not sent.\n", i, throttle[i], motor_address[i]);
             }
         return motor_status;
@@ -100,7 +101,7 @@ class hw_interface{
         printf("Checking motors...\n");
         int motornum, motoraddr, motorworks;
         int thr0 = 0;// 0 speed test command
-        char PressEnter;
+        // char PressEnter;
 
         for(motornum = 1; motornum <= 4; motornum++){
           motoraddr = motornum+40;// 1, 2, 3, ... -> 41, 42, 43, ...
@@ -125,7 +126,7 @@ class hw_interface{
               printf("Fix motor %i, then press ENTER.\n\n", motornum);
               printf("Note: another i2c device may interupt the signal if\n");
               printf("any i2c wires are attached to unpowered components.\n");
-              scanf("%c",&PressEnter);
+              // scanf("%c",&PressEnter);
               break;
             }
           }
