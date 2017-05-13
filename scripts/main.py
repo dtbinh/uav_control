@@ -6,13 +6,13 @@ from scipy.integrate import ode
 import numpy.linalg as la
 import pdb
 import matplotlib.pyplot as plt
-# import mpl_toolkits.mplot3d.axes3d as p3
+import mpl_toolkits.mplot3d.axes3d as p3
 import matplotlib.animation as animation
 import sys
 # import seaborn as sns
 # from mayavi import mlab
 # import trimesh
-
+import ukf_uav
 
 class UAV(object):
 
@@ -21,12 +21,13 @@ class UAV(object):
         self.g = 9.81
         self.J = J
         self.e3 = e3
-        self.kR = 8.81; # attitude gains
-        self.kW = 2.54; # attitude gains
+        self.kR = 8.81 # attitude gains
+        self.kW = 2.54 # attitude gains
         self.kx = 16.*self.m # position gains
         self.kv = 5.6*self.m # position gains
+        self.command = None
         print('UAV: initialized')
-
+        # self.ukf = ukf_uav.UnscentedKalmanFilter(12,6,0.01)
     def dydt(self, t, X):
         R = np.reshape(X[0:9],(3,3));  # rotation from body to inertial
         W = X[9:12];   # angular rate
@@ -105,6 +106,7 @@ class UAV(object):
         x_dot = v
         v_dot = self.g*self.e3 - f*R.dot(self.e3)/self.m
         X_dot = np.concatenate((R_dot.flatten(), W_dot, x_dot, v_dot))
+        self.command = np.insert(M,0,f)
         return X_dot
 
     def position_control(self, t, R, W, x, v, d_in):
@@ -280,122 +282,149 @@ def hat(x):
 
 
 if __name__ == "__main__":
-    # execute only if run as a script
-  J = np.diag([0.0820, 0.0845, 0.1377])
-  e3 = np.array([0.,0.,1.])
-  uav_t = UAV(J, e3)
-  t_max = 12
-  N = 100*t_max + 1
-  t = np.linspace(0,t_max,N)
-  xd = np.array([0.,0.,0.])
-  # Initial Conditions
-  R0 = [[1., 0., 0.],
-          [0., -0.9995, -0.0314],
-          [0., 0.0314, -0.9995]] # initial rotation
-  R0 = np.eye(3)
-  W0 = [0.,0.,0.];   # initial angular velocity
-  x0 = [0.,0.,0.];  # initial position (altitude?0)
-  v0 = [0.,0.,0.];   # initial velocity
-  R0v = np.array(R0).flatten().T
-  y0 = np.concatenate((R0v, W0,x0,v0))
+      # execute only if run as a script
+    J = np.diag([0.0820, 0.0845, 0.1377])
+    e3 = np.array([0.,0.,1.])
+    uav_t = UAV(J, e3)
+    t_max = 2
+    N = 100*t_max + 1
+    t = np.linspace(0,t_max,N)
+    xd = np.array([0.,0.,0.])
+    # Initial Conditions
+    R0 = [[1., 0., 0.],
+            [0., -0.9995, -0.0314],
+            [0., 0.0314, -0.9995]] # initial rotation
+    R0 = np.eye(3)
+    W0 = [0.,0.,0.];   # initial angular velocity
+    x0 = [0.,0.,0.];  # initial position (altitude?0)
+    v0 = [0.,0.,0.];   # initial velocity
+    R0v = np.array(R0).flatten().T
+    y0 = np.concatenate((R0v, W0,x0,v0))
+  
+    # sim = odeint(uav_t.dydt,y0,t)
+  
+    solver = ode(uav_t.dydt)
+    solver.set_integrator('dopri5').set_initial_value(y0, 0)
+    dt = 1./100
+    sim = []
+    command_val = []
+    while solver.successful() and solver.t < t_max:
+        solver.integrate(solver.t+dt)
+        sim.append(solver.y)
 
-  # sim = odeint(uav_t.dydt,y0,t)
-
-  solver = ode(uav_t.dydt)
-  solver.set_integrator('dopri5').set_initial_value(y0, 0)
-  dt = 1./100
-  sim = []
-  while solver.successful() and solver.t < t_max:
-      solver.integrate(solver.t+dt)
-      sim.append(solver.y)
-
-  sim = np.array(sim)
-
-  # fig, ax = plt.subplots()
-  fig = plt.figure()
-  # ax = p3.Axes3D(fig)
-  xs = sim[:,-6]
-  ys = sim[:,-5]
-  zs = sim[:,-4]
-
-#  plt.figure()
-#  plt.subplot(211)
-#  plt.plot(t,sim[:,-6:-3])
-#  plt.grid()
-#  plt.subplot(212)
-#  plt.plot(t,rot_eul(sim))
-#  plt.grid()
-#  plt.show()
-#  plt.close()
-#
-  sys.exit()
-#  anim_on = 1
-#  if anim_on:
-#      mlab.figure(bgcolor=(0.839216, 0.839216, 0.839216))
-#    mlab.roll(45)
-#    pt = mlab.points3d(xs[0], ys[0], zs[0],color =  (1, 0, 0), opacity=0.5, scale_factor = 0.1)
-#    path = mlab.plot3d(xs,ys,zs, color = (0.541176, 0.168627, 0.886275),tube_radius = 0.01, opacity=0.5)
-#
-#    wx = np.linspace(-1,1,5)
-#    wy = wx
-#    [wx,wy] = np.meshgrid(wx,wy)
-#    wz = np.zeros(wx.shape)
-#    ground = mlab.mesh(wx,wy,wz,color=(0,0,0),representation='wireframe')
-#
-#    xaz = mlab.plot3d([xs[0], xs[0]] ,[ys[0],ys[0]],[zs[0],zs[0]],color=(0,0,1),tube_radius = 0.01)
-#    xax = mlab.plot3d([xs[0], xs[0]] ,[ys[0],ys[0]],[zs[0],zs[0]],color=(1,0,0),tube_radius = 0.01)
-#    xay = mlab.plot3d([xs[0], xs[0]] ,[ys[0],ys[0]],[zs[0],zs[0]],color=(0,1,0),tube_radius = 0.01)
-#    # zipped = zip(xx,xy,xz)
-#
-#    eul_ang = rot_eul(sim)
-#    # @mlab.show
-#    @mlab.animate(delay=10)
-#    def anim():
-#        f = mlab.gcf()
-#        while True:
-#            i = 0
-#            for (x, y, z, angle) in zip(xs, ys, zs, sim[:,:9]):
-#                pt.mlab_source.set(x=x, y=y, z=z)
-#                ptx = angle.reshape((3,3)).dot([1,0,0])*0.2
-#                ptx = [x,y,z] + ptx
-#                xax.mlab_source.set(x=[x, ptx[0]] ,y=[y,ptx[1]],z=[z, ptx[2]])
-#                ptx = angle.reshape((3,3)).dot([0,1,0])*0.2
-#                xay.mlab_source.set(x=[x, x + ptx[0]] ,y=[y,y+ptx[1]],z=[z,z+ptx[2]])
-#                ptx = angle.reshape((3,3)).dot([0,0,1])*0.2
-#                xaz.mlab_source.set(x=[x, x + ptx[0]] ,y=[y,y+ptx[1]],z=[z,z+ptx[2]])
-#                f.scene.render()
-#                i += 1
-#                yield
-#
-#    # Run the animation.
-#    anim()
-#    mlab.show()
-#
-#
-#
-#
-  # x = np.arange(0, 2*np.pi, 0.01)
-  # line, = ax.plot(sim[:,-6], sim[:,-5])
-
-  # def animate(i):
-  #   line.set_data(np.vstack([sim[:i,-6], sim[:i,-5]]))  # update the data
-  #   line.set_3d_properties(sim[:i,-4])
-  #   return line,
-
-  # Setting the axes properties
-  # ax.set_xlim3d([-1.0, 1.0])
-  # ax.set_xlabel('X')
-  # ax.set_ylim3d([-1.0, 1.0])
-  # ax.set_ylabel('Y')
-  # ax.set_zlim3d([0.0, 1.0])
-  # ax.set_zlabel('Z')
-  # Init only required for blitting to give a clean slate.
-  # def init():
-    # print(np.concatenate((x.T,np.ma.array(x, mask=True).T)).shape)
-    # pdb.set_trace()
-    # line.set_data(np.concatenate((x,np.ma.array(x, mask=True))))
-    # line.set_3d_properties(x)
-    # return line,
-  # ani = animation.FuncAnimation(fig, animate, np.arange(N),
-                              # interval=25, blit=False)
-
+        command_val.append(uav_t.command)
+  
+    sim = np.array(sim)
+  
+  
+    ukf_test = ukf_uav.UnscentedKalmanFilter(12,6,0.01)
+    Ns = 12
+    q = 0.1
+    r = 0.1
+    ukf_test.J = J
+    ukf_test.e3 = e3
+    ukf_test.Q = q**2*np.eye(Ns)
+    ukf_test.R = r**2
+    ukf_test.P = np.eye(Ns)
+    x = np.zeros(Ns)
+    P = np.eye(Ns)
+    for i, k in enumerate(sim):
+        Rot = np.reshape(k[:9],(-1,9))
+        Rot_e = rot_eul(Rot)
+        W = k[9:12]
+        x = k[12:15]
+        v = k[15:]
+        x_obs = np.concatenate((x,v,np.reshape(Rot_e,(3,)),W))
+        z = ukf_test.sss(x_obs)
+        x, P = ukf_test.ukf(x,P, z, ukf_test.Q, ukf_test.R, command_val[i])
+        s = ukf_test.dss(s,u)
+        pdb.set_trace() 
+        pass
+    # fig, ax = plt.subplots()
+    fig = plt.figure()
+    ax = p3.Axes3D(fig)
+    xs = sim[:,-6]
+    ys = sim[:,-5]
+    zs = sim[:,-4]
+    ax.plot(xs,ys,zs)
+    fig.show()
+  #  plt.figure()
+  #  plt.subplot(211)
+  #  plt.plot(t,sim[:,-6:-3])
+  #  plt.grid()
+  #  plt.subplot(212)
+  #  plt.plot(t,rot_eul(sim))
+  #  plt.grid()
+  #  plt.show()
+  #  plt.close()
+  #
+  #  anim_on = 1
+  #  if anim_on:
+  #      mlab.figure(bgcolor=(0.839216, 0.839216, 0.839216))
+  #    mlab.roll(45)
+  #    pt = mlab.points3d(xs[0], ys[0], zs[0],color =  (1, 0, 0), opacity=0.5, scale_factor = 0.1)
+  #    path = mlab.plot3d(xs,ys,zs, color = (0.541176, 0.168627, 0.886275),tube_radius = 0.01, opacity=0.5)
+  #
+  #    wx = np.linspace(-1,1,5)
+  #    wy = wx
+  #    [wx,wy] = np.meshgrid(wx,wy)
+  #    wz = np.zeros(wx.shape)
+  #    ground = mlab.mesh(wx,wy,wz,color=(0,0,0),representation='wireframe')
+  #
+  #    xaz = mlab.plot3d([xs[0], xs[0]] ,[ys[0],ys[0]],[zs[0],zs[0]],color=(0,0,1),tube_radius = 0.01)
+  #    xax = mlab.plot3d([xs[0], xs[0]] ,[ys[0],ys[0]],[zs[0],zs[0]],color=(1,0,0),tube_radius = 0.01)
+  #    xay = mlab.plot3d([xs[0], xs[0]] ,[ys[0],ys[0]],[zs[0],zs[0]],color=(0,1,0),tube_radius = 0.01)
+  #    # zipped = zip(xx,xy,xz)
+  #
+  #    eul_ang = rot_eul(sim)
+  #    # @mlab.show
+  #    @mlab.animate(delay=10)
+  #    def anim():
+  #        f = mlab.gcf()
+  #        while True:
+  #            i = 0
+  #            for (x, y, z, angle) in zip(xs, ys, zs, sim[:,:9]):
+  #                pt.mlab_source.set(x=x, y=y, z=z)
+  #                ptx = angle.reshape((3,3)).dot([1,0,0])*0.2
+  #                ptx = [x,y,z] + ptx
+  #                xax.mlab_source.set(x=[x, ptx[0]] ,y=[y,ptx[1]],z=[z, ptx[2]])
+  #                ptx = angle.reshape((3,3)).dot([0,1,0])*0.2
+  #                xay.mlab_source.set(x=[x, x + ptx[0]] ,y=[y,y+ptx[1]],z=[z,z+ptx[2]])
+  #                ptx = angle.reshape((3,3)).dot([0,0,1])*0.2
+  #                xaz.mlab_source.set(x=[x, x + ptx[0]] ,y=[y,y+ptx[1]],z=[z,z+ptx[2]])
+  #                f.scene.render()
+  #                i += 1
+  #                yield
+  #
+  #    # Run the animation.
+  #    anim()
+  #    mlab.show()
+  #
+  #
+  #
+  #
+    # x = np.arange(0, 2*np.pi, 0.01)
+    # line, = ax.plot(sim[:,-6], sim[:,-5])
+  
+    # def animate(i):
+    #   line.set_data(np.vstack([sim[:i,-6], sim[:i,-5]]))  # update the data
+    #   line.set_3d_properties(sim[:i,-4])
+    #   return line,
+  
+    # Setting the axes properties
+    # ax.set_xlim3d([-1.0, 1.0])
+    # ax.set_xlabel('X')
+    # ax.set_ylim3d([-1.0, 1.0])
+    # ax.set_ylabel('Y')
+    # ax.set_zlim3d([0.0, 1.0])
+    # ax.set_zlabel('Z')
+    # Init only required for blitting to give a clean slate.
+    # def init():
+      # print(np.concatenate((x.T,np.ma.array(x, mask=True).T)).shape)
+      # pdb.set_trace()
+      # line.set_data(np.concatenate((x,np.ma.array(x, mask=True))))
+      # line.set_3d_properties(x)
+      # return line,
+    # ani = animation.FuncAnimation(fig, animate, np.arange(N),
+                                # interval=25, blit=False)
+  

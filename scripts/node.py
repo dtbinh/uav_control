@@ -7,6 +7,11 @@ from sensor_msgs.msg import Imu
 from controller import *
 import time
 from i2c_cython.hw_interface import pyMotor
+# import roslib
+# roslib.load_manifest("estimation")
+# from estimation import ukf_uav
+# import ukf_uav
+import ukf_uav
 
 
 class uav(object):
@@ -33,6 +38,7 @@ class uav(object):
         self.M = None
         if motor_address != None:
             self.hw_interface = pyMotor(motor_address)
+        self.ukf = ukf_uav.UnscentedKalmanFilter(12,6,1)
         rospy.spin()
 
     def mocap_sub(self, msg):
