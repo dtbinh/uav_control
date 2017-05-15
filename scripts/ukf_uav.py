@@ -49,16 +49,16 @@ class UnscentedKalmanFilter(object):
         """State space UAV dynamics"""
         A = np.zeros((12,12))
         for i in range(6):
-            A[i][i], A[i][i+1] = 1, dt
-            A[i+6][i+6] = 1
+            A[i][i], A[i][i+3] = 1, dt
+            # A[i+6][i+6] = 1
         # TODO: Implement controller input term here
         # noting that u = [F, M] remember to bring them to inertial frame
-        B = np.zeros((self._dim_x, len(u)))
-        #B[5,2] = 1/self.m
-        #B[-3:,-3:] = self.J
-        #uf = -u[0]*self.Rb.dot(self.e3)
-        #uf = np.append( uf, self.Rb.dot(u[1:]))
-        xp = x # + self._dt*B.dot(uf)
+        B = np.zeros((self._dim_x, 6))
+        B[5,2] = 1/self.m
+        B[-3:,-3:] = self.J
+        uf = -u[0]*self.Rb.dot(self.e3)
+        uf = np.append( uf, self.Rb.dot(u[1:]))
+        xp = A.dot(x)  + self._dt*B.dot(uf)
         return xp
 
     def sss(self, x, u = None):
@@ -71,11 +71,11 @@ class UnscentedKalmanFilter(object):
         A = np.zeros((n_c, n))
         for i in range(n_c):
             A[i][i+n_c - 1] = 1
-        return A.dot(x)
+        return x
 
     def f(self, x, u = None):
         """nonlinear state function"""
-        x += self._dt*np.cos(np.pi*u)
+        # x += self._dt*np.cos(np.pi*u)
         return x
 
     def h(self, x, u = None):
@@ -116,8 +116,8 @@ class UnscentedKalmanFilter(object):
         """
         n = len(x)
         m = len(x)
-        alpha = 0.75
-        kappa = 50.
+        alpha = 0.25
+        kappa = 100.
         beta = 2.
         lamb = alpha**2*(n+kappa)-n
         c_n = n+lamb
@@ -126,8 +126,8 @@ class UnscentedKalmanFilter(object):
         Wc[0] +=  (1-alpha**2+beta)
         c_nr=np.sqrt(c_n)
         X = self.sigmaPoints(x,P,c_nr)
-        x1, X1, P1, X2 = self.ut(self.f, X, Wm, Wc, n, Q, u)
-        z1,Z1,P2,Z2 = self.ut(self.h, X1,Wm,Wc, n, R)
+        x1, X1, P1, X2 = self.ut(self.dss, X, Wm, Wc, n, Q, u)
+        z1,Z1,P2,Z2 = self.ut(self.sss, X1,Wm,Wc, n, R)
         P12=X2.dot(np.diag(Wc).dot(Z2.T))
         K=P12.dot(inv(P2))
         x=x1+K.dot(z-z1)
@@ -148,8 +148,8 @@ if __name__=='__main__':
     ukf_t = UnscentedKalmanFilter(Ns, Ns, 0.01)
     s = np.zeros(Ns)
     u = np.zeros(Ns)
-    q=0.1
-    r=0.8
+    q=0.05
+    r=1.
     Q = q**2*np.eye(Ns)
     R = r**2
     P = np.eye(Ns)

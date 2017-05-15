@@ -11,8 +11,8 @@ import matplotlib.animation as animation
 import sys
 # import seaborn as sns
 # from mayavi import mlab
-# import trimesh
 import ukf_uav
+
 
 class UAV(object):
 
@@ -25,6 +25,8 @@ class UAV(object):
         self.kW = 2.54 # attitude gains
         self.kx = 16.*self.m # position gains
         self.kv = 5.6*self.m # position gains
+        self.xd = None
+        self.xd_dot = None
         self.command = None
         print('UAV: initialized')
         # self.ukf = ukf_uav.UnscentedKalmanFilter(12,6,0.01)
@@ -51,7 +53,7 @@ class UAV(object):
         if t < 4:
             xd_dot = np.array([1.+ 0.5*t, 0.2*np.sin(2*np.pi*t), -0.1])
             b1d = np.array([1., 0.,0.])
-            d_in = (xd, xd_dot, xd_ddot, xd_dddot, xd_ddddot, 
+            d_in = (xd, xd_dot, xd_ddot, xd_dddot, xd_ddddot,
                     b1d, b1d_dot, b1d_ddot, Rd, Wd, Wd_dot)
             (f, M) = self.velocity_control(t, R, W, x, v, d_in)
         elif t < 6:
@@ -60,21 +62,21 @@ class UAV(object):
             ang_d_dot=2.*np.pi
             Rd = np.array([[np.cos(ang_d), 0., np.sin(ang_d)],[0.,1.,0.],
                 [-np.sin(ang_d), 0., np.cos(ang_d)]])
-            Rd_dot = np.array([[-ang_d_dot*np.sin(ang_d), 0., 
+            Rd_dot = np.array([[-ang_d_dot*np.sin(ang_d), 0.,
                 ang_d_dot*np.cos(ang_d)],[0.,0.,0.],
                 [-ang_d_dot*np.cos(ang_d), 0., -ang_d_dot*np.sin(ang_d)]])
             Wdhat=Rd.T.dot(Rd_dot)
             Wd=np.array([-Wdhat[1,2],Wdhat[0,2],-Wdhat[0,1]])
             b1d = Rd[:,0]
             b1d_dot = Rd_dot[:,0]
-            d_in = (xd, xd_dot, xd_ddot, xd_dddot, xd_ddddot, 
+            d_in = (xd, xd_dot, xd_ddot, xd_dddot, xd_ddddot,
                     b1d, b1d_dot, b1d_ddot, Rd, Wd, Wd_dot)
             (f, M) = self.attitude_control(t, R, W, x, v, d_in)
         elif t < 8:
             xd = np.array([14. - t, 0, 0])
             xd_dot = np.array([-1 , 0, 0])
             b1d = np.array([1., 0,0])
-            d_in = (xd, xd_dot, xd_ddot, xd_dddot, xd_ddddot, 
+            d_in = (xd, xd_dot, xd_ddot, xd_dddot, xd_ddddot,
                     b1d, b1d_dot, b1d_ddot, Rd, Wd, Wd_dot)
             (f, M) = self.position_control(t, R, W, x, v, d_in)
         elif t < 9:
@@ -90,14 +92,14 @@ class UAV(object):
             Wd=np.array([-Wdhat[1,2],Wdhat[0,2],-Wdhat[0,1]])
             b1d = Rd[:,0]
             b1d_dot = Rd_dot[:,0]
-            d_in = (xd, xd_dot, xd_ddot, xd_dddot, xd_ddddot, 
+            d_in = (xd, xd_dot, xd_ddot, xd_dddot, xd_ddddot,
                     b1d, b1d_dot, b1d_ddot, Rd, Wd, Wd_dot)
             (f, M) = self.attitude_control(t, R, W, x, v, d_in)
         elif t < 12:
             xd = np.array([20. - 5./3*t, 0, 0])
             xd_dot = np.array([-5./3 , 0, 0])
             b1d = np.array([0., 1.,0.])
-            d_in = (xd, xd_dot, xd_ddot, xd_dddot, xd_ddddot, 
+            d_in = (xd, xd_dot, xd_ddot, xd_dddot, xd_ddddot,
                     b1d, b1d_dot, b1d_ddot, Rd, Wd, Wd_dot)
             (f, M) = self.position_control(t, R, W, x, v, d_in)
 
@@ -106,6 +108,8 @@ class UAV(object):
         x_dot = v
         v_dot = self.g*self.e3 - f*R.dot(self.e3)/self.m
         X_dot = np.concatenate((x_dot, v_dot, R_dot.flatten(), W_dot))
+        self.xd = xd
+        self.xd_dot = xd_dot
         self.command = np.insert(M,0,f)
         return X_dot
 
@@ -283,10 +287,12 @@ def hat(x):
 
 if __name__ == "__main__":
       # execute only if run as a script
+    ukf_flag = False
+    anim_flag = True
     J = np.diag([0.0820, 0.0845, 0.1377])
     e3 = np.array([0.,0.,1.])
     uav_t = UAV(J, e3)
-    t_max = 2
+    t_max = 12
     N = 100*t_max + 1
     t = np.linspace(0,t_max,N)
     xd = np.array([0.,0.,0.])
@@ -300,25 +306,61 @@ if __name__ == "__main__":
     v0 = [0.,0.,0.];   # initial velocity
     R0v = np.array(R0).flatten().T
     y0 = np.concatenate((x0, v0, R0v, W0))
-  
+
     # sim = odeint(uav_t.dydt,y0,t)
-  
+
     solver = ode(uav_t.dydt)
     solver.set_integrator('dopri5').set_initial_value(y0, 0)
     dt = 1./100
     sim = []
+    xd = []
+    xd_dot = []
     command_val = []
     while solver.successful() and solver.t < t_max:
         solver.integrate(solver.t+dt)
         sim.append(solver.y)
+        xd.append(uav_t.xd)
+        xd_dot.append(uav_t.xd_dot)
         command_val.append(uav_t.command)
-  
+
     sim = np.array(sim)
+    xd = np.array(xd)
+    xd_dot = np.array(xd_dot)
+    # def animate(i):
+    #fig = plt.figure()
+    #ax = fig.gca(projection = '3d')
+    #ax.set_aspect('equal')
+    #ax.plot(sim[:,0],sim[:,1],sim[:,2])
+    #ax.set_xlim(0, 10)
+    #ax.set_ylim(-5, 5)
+    #ax.set_zlim(-5, 5)
+    #plt.show()
+    if anim_flag:
+        f, ax = plt.subplots(3,2)
+        ax[0][0].plot(xd[:,0])
+        ax[0][0].plot(sim[:,0])
+        ax[0][1].plot(xd_dot[:,0])
+        ax[0][1].plot(sim[:,3])
+
+        ax[1][0].plot(xd[:,1])
+        ax[1][1].plot(xd_dot[:,1])
+        ax[1][0].plot(sim[:,1])
+        ax[1][1].plot(sim[:,4])
+
+        ax[2][0].plot(xd[:,2])
+        ax[2][1].plot(xd_dot[:,2])
+        ax[2][0].plot(sim[:,2])
+        ax[2][1].plot(sim[:,5])
+        plt.show()
+        pass
+
+    if ukf_flag == False:
+        sys.exit()
 
     ukf_test = ukf_uav.UnscentedKalmanFilter(12,6,0.01)
     Ns = 12
     q = 0.01
-    r = 0.05
+    r = 0.1
     ukf_test.J = J
     ukf_test.e3 = e3
     ukf_test.Q = q**2*np.eye(Ns)
@@ -332,9 +374,11 @@ if __name__ == "__main__":
     for i, k in enumerate(sim):
         Rot = np.reshape(k[6:15],(-1,9))
         Rot_e = rot_eul(Rot)
-        x_obs = np.concatenate((k[:6],np.reshape(Rot_e,(3,)),k[-3:])) + r*(0.5-np.random.random(12))
-        x_sensor.append(x_obs)
+        noise = np.zeros(Ns)
+        noise[:3] = r*(0.5-np.random.random(3))
+        x_obs = np.concatenate((k[:6],np.reshape(Rot_e,(3,)),k[-3:])) + noise
         z = ukf_test.sss(x_obs)# + r*(0.5-np.random.random(6))
+        x_sensor.append(z)
         ukf_test.Rb = Rot.reshape((3,3))
         x, P = ukf_test.ukf(x,P, z, ukf_test.Q, ukf_test.R, command_val[i])
         # x_obs = ukf_test.dss(x,command_val[i])# + q*(0.5-np.random.random(Ns))
@@ -345,15 +389,15 @@ if __name__ == "__main__":
     x_sensor = np.array(x_sensor)
     f, (ax0, ax1, ax2) = plt.subplots(3,1)
     ax0.plot(sim[:,0],'b--')
-    ax0.plot(x_estimate[:,0],'r.-')
     ax0.plot(x_sensor[:,0],'gx')
+    ax0.plot(x_estimate[:,0],'r')
     ax1.plot(sim[:,1],'b--')
     ax1.plot(x_sensor[:,1],'gx')
-    ax1.plot(x_estimate[:,1],'r.-')
+    ax1.plot(x_estimate[:,1],'r')
     ax2.plot(sim[:,2],'b--')
     ax2.plot(x_sensor[:,2],'gx')
-    ax2.plot(x_estimate[:,2],'r.-')
-    
+    ax2.plot(x_estimate[:,2],'r')
+
     plt.show()
     sys.exit()
 
