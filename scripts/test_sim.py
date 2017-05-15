@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import unittest
-from main import *
+from sim_controller import *
 
 class testMain(unittest.TestCase):
     """Tests for `main.py`."""
@@ -23,4 +23,4 @@ class testMain(unittest.TestCase):
       x = range(3)
 
 if __name__ == '__main__':
-    unittest.main()
+    pass

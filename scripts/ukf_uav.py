@@ -5,6 +5,7 @@ import numpy as np
 from numpy.linalg import cholesky, inv, det
 import matplotlib.pyplot as plt
 import pdb
+import matplotlib.pyplot as plt
 
 
 class UnscentedKalmanFilter(object):
@@ -33,6 +34,7 @@ class UnscentedKalmanFilter(object):
         self.J = np.eye(3)
         self.R = np.eye(3)
         self.e3 = np.array([0,0,1])
+        self.Rb = np.eye(3)
         print('Unscented Kalman Filter initialized')
 
     def sigmaPoints(self, x, P, c):
@@ -51,28 +53,34 @@ class UnscentedKalmanFilter(object):
             A[i+6][i+6] = 1
         # TODO: Implement controller input term here
         # noting that u = [F, M] remember to bring them to inertial frame
-        B = np.zeros((self._dim_x, 6))
-        B[3:6,0:3] = 1/self.m*np.eye(3)
-        B[-3:,-3:] = self.J
-        uf = -u[0]*self.R.dot(self.e3)
-        uf = np.append( uf, self.R.dot(u[1:]))
-        xp = x + self._dt*B.dot(uf)
+        B = np.zeros((self._dim_x, len(u)))
+        #B[5,2] = 1/self.m
+        #B[-3:,-3:] = self.J
+        #uf = -u[0]*self.Rb.dot(self.e3)
+        #uf = np.append( uf, self.Rb.dot(u[1:]))
+        xp = x # + self._dt*B.dot(uf)
         return xp
 
     def sss(self, x, u = None):
         """Sensor state"""
-        A = np.zeros((6,12))
-        for i in range(6):
-            A[i][i+6] = 1
+        n = len(x)
+        if u is None:
+            n_c = 1
+        else:
+            n_c = len(u)
+        A = np.zeros((n_c, n))
+        for i in range(n_c):
+            A[i][i+n_c - 1] = 1
         return A.dot(x)
 
-    def f(x):
+    def f(self, x, u = None):
         """nonlinear state function"""
-        return np.array([x[1],x[2],0.05*x[0]*(x[1]+x[2])])
+        x += self._dt*np.cos(np.pi*u)
+        return x
 
-    def h(x):
+    def h(self, x, u = None):
         """nonlinear sensor function"""
-        return np.array([x[0]])
+        return x
 
     def ut(self, func, x, wm, wc, n_f, Q, u = None):
         """unscented transform
@@ -109,7 +117,7 @@ class UnscentedKalmanFilter(object):
         n = len(x)
         m = len(x)
         alpha = 0.75
-        kappa = 0.
+        kappa = 50.
         beta = 2.
         lamb = alpha**2*(n+kappa)-n
         c_n = n+lamb
@@ -118,8 +126,8 @@ class UnscentedKalmanFilter(object):
         Wc[0] +=  (1-alpha**2+beta)
         c_nr=np.sqrt(c_n)
         X = self.sigmaPoints(x,P,c_nr)
-        x1, X1, P1, X2 = self.ut(self.dss, X, Wm, Wc, n, Q, u)
-        z1,Z1,P2,Z2 = self.ut(self.sss, X1,Wm,Wc, int(n/2), R)
+        x1, X1, P1, X2 = self.ut(self.f, X, Wm, Wc, n, Q, u)
+        z1,Z1,P2,Z2 = self.ut(self.h, X1,Wm,Wc, n, R)
         P12=X2.dot(np.diag(Wc).dot(Z2.T))
         K=P12.dot(inv(P2))
         x=x1+K.dot(z-z1)
@@ -135,26 +143,33 @@ if __name__=='__main__':
     # test(4)
     # test.inspect_types()
     # print('test')
-    ukf_t = UnscentedKalmanFilter(12, 6, 0.01)
     # ukf_t.ukf(x,P, z, Q, R, u)
-    Ns = 12 # number of states
+    Ns = 2 # number of states
+    ukf_t = UnscentedKalmanFilter(Ns, Ns, 0.01)
     s = np.zeros(Ns)
-    u = np.zeros(4)
+    u = np.zeros(Ns)
     q=0.1
-    r=0.1
+    r=0.8
     Q = q**2*np.eye(Ns)
     R = r**2
     P = np.eye(Ns)
     x = s+q*np.random.random(Ns)
-    N = 20
+    N = 200
+    t_sim = np.linspace(0,2,num = N)
+    xGT = np.zeros((Ns,N))
+    xGT[0,:]= np.sin(np.pi*t_sim)
     xV = np.zeros((Ns,N))
     sV = np.copy(xV)
-    zV = np.zeros((6,N))
-    for k in range(N):
-        z = ukf_t.sss(s)+r*np.random.random()
-        sV[:,k] = s
-        zV[:,k] = z
-        x, P = ukf_t.ukf(x, P, z, Q, R, u)
-        xV[:,k] = x
-        s = ukf_t.dss(s,u) + q*np.random.random(Ns)
+    zV = np.zeros((Ns,N))
+    for i in range(N):
+        x_cur = xGT[:,i]
+        z = ukf_t.h(x_cur+r*(0.5-np.random.random()))
+        zV[:,i] = z
+        x, P = ukf_t.ukf(x, P, z, Q, R, t_sim[i])
+        xV[:,i] = x
+        #x = ukf_t.f(x,u) + q*np.random.random(Ns)
         pass
+    plt.plot(xGT[0],'b')
+    plt.plot(xV[0],'r.-')
+    plt.plot(zV[0],'gx')
+    plt.show()
