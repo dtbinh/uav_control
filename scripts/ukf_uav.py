@@ -48,7 +48,9 @@ class UnscentedKalmanFilter(object):
             dt = self._dt
         """State space UAV dynamics"""
         A = np.zeros((12,12))
-        for i in range(6):
+        for i in range(3):
+            A[i][i], A[i][i+3] = 1, dt
+        for i in range(6,9):
             A[i][i], A[i][i+3] = 1, dt
             # A[i+6][i+6] = 1
         # TODO: Implement controller input term here
@@ -58,7 +60,7 @@ class UnscentedKalmanFilter(object):
         B[-3:,-3:] = self.J
         uf = -u[0]*self.Rb.dot(self.e3)
         uf = np.append( uf, self.Rb.dot(u[1:]))
-        xp = A.dot(x)  + self._dt*B.dot(uf)
+        xp = A.dot(x)  #+ self._dt*B.dot(uf)
         return xp
 
     def sss(self, x, u = None):
@@ -102,7 +104,7 @@ class UnscentedKalmanFilter(object):
         Sigma = Xd.dot(np.diag(wc.T).dot(Xd.T)) + Q
         return (mu, X, Sigma, Xd)
 
-    def ukf(self, x, P, z, Q, R, u):
+    def ukf(self, x, P, z, Q, R, u, state_transition = None, state_observation = None):
         """UKF
         args:
             x: a priori state estimate
@@ -117,7 +119,7 @@ class UnscentedKalmanFilter(object):
         n = len(x)
         m = len(x)
         alpha = 0.25
-        kappa = 100.
+        kappa = 50.
         beta = 2.
         lamb = alpha**2*(n+kappa)-n
         c_n = n+lamb
@@ -126,10 +128,14 @@ class UnscentedKalmanFilter(object):
         Wc[0] +=  (1-alpha**2+beta)
         c_nr=np.sqrt(c_n)
         X = self.sigmaPoints(x,P,c_nr)
-        x1, X1, P1, X2 = self.ut(self.dss, X, Wm, Wc, n, Q, u)
-        z1,Z1,P2,Z2 = self.ut(self.sss, X1,Wm,Wc, n, R)
+        x1, X1, P1, X2 = self.ut(state_transition, X, Wm, Wc, n, Q, u)
+        z1,Z1,P2,Z2 = self.ut(state_observation, X1,Wm,Wc, n, R)
         P12=X2.dot(np.diag(Wc).dot(Z2.T))
-        K=P12.dot(inv(P2))
+        try:
+            K=P12.dot(inv(P2))
+        except Exception as err:
+            print(err)
+            pdb.set_trace()
         x=x1+K.dot(z-z1)
         P=P1-K.dot(P12.T)
         return x, P
@@ -165,7 +171,7 @@ if __name__=='__main__':
         x_cur = xGT[:,i]
         z = ukf_t.h(x_cur+r*(0.5-np.random.random()))
         zV[:,i] = z
-        x, P = ukf_t.ukf(x, P, z, Q, R, t_sim[i])
+        x, P = ukf_t.ukf(x, P, z, Q, R, t_sim[i], state_transition = ukf_t.f, state_observation = ukf_t.h)
         xV[:,i] = x
         #x = ukf_t.f(x,u) + q*np.random.random(Ns)
         pass

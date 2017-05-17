@@ -29,42 +29,6 @@ class UAV(object):
         self.command = None
         print('UAV: initialized')
         # self.ukf = ukf_uav.UnscentedKalmanFilter(12,6,0.01)
-    def dydt_pos(self, t, X):
-        R = np.reshape(X[6:15],(3,3));  # rotation from body to inertial
-        W = X[15:];   # angular rate
-        x = X[:3];  # position
-        v = X[3:6];    # velocity
-
-        xd = np.array([0, 0, 0])
-        xd_dot = np.array([0, 0, 0])
-        xd_ddot = np.array([0, 0, 0])
-        xd_dddot = np.array([0, 0, 0])
-        xd_ddddot = np.array([0, 0, 0])
-        b1d = np.array([1., 0., 0.])
-        b1d_dot=np.array([0., 0., 0.])
-        b1d_ddot=np.array([0., 0., 0.])
-        Rd = np.eye(3)
-        Wd = np.array([0.,0.,0.])
-        Wd_dot = np.array([0.,0.,0.])
-        f = np.array([0,0,0])
-        M = np.array([0,0,0])
-
-        xd = np.array([0.5*np.sin(t), 0, t])
-        xd_dot = np.array([0.5 , 0, 1])
-        b1d = np.array([1., 0.,0.])
-        d_in = (xd, xd_dot, xd_ddot, xd_dddot, xd_ddddot,
-                b1d, b1d_dot, b1d_ddot, Rd, Wd, Wd_dot)
-        (f, M) = self.position_control(t, R, W, x, v, d_in)
-
-        R_dot = np.dot(R,hat(W))
-        W_dot = np.dot(la.inv(self.J), M - np.cross(W, np.dot(self.J, W)))
-        x_dot = v
-        v_dot = self.g*self.e3 - f*R.dot(self.e3)/self.m
-        X_dot = np.concatenate((x_dot, v_dot, R_dot.flatten(), W_dot))
-        self.xd = xd
-        self.xd_dot = xd_dot
-        self.command = np.insert(M,0,f)
-        return X_dot
 
     def dydt(self, t, X):
         R = np.reshape(X[6:15],(3,3));  # rotation from body to inertial
@@ -267,8 +231,8 @@ def hat(x):
 
 if __name__ == "__main__":
       # execute only if run as a script
-    ukf_flag = False
-    anim_flag = True
+    ukf_flag = True
+    anim_flag = False
     J = np.diag([0.0820, 0.0845, 0.1377])
     e3 = np.array([0.,0.,1.])
     uav_t = UAV(J, e3)
@@ -289,7 +253,7 @@ if __name__ == "__main__":
 
     # sim = odeint(uav_t.dydt,y0,t)
 
-    solver = ode(uav_t.dydt_pos)
+    solver = ode(uav_t.dydt)
     solver.set_integrator('dopri5').set_initial_value(y0, 0)
     dt = 1./100
     sim = []
@@ -339,7 +303,7 @@ if __name__ == "__main__":
 
     ukf_test = ukf_uav.UnscentedKalmanFilter(12,6,0.01)
     Ns = 12
-    q = 0.01
+    q = 0.1
     r = 0.1
     ukf_test.J = J
     ukf_test.e3 = e3
@@ -347,7 +311,7 @@ if __name__ == "__main__":
     ukf_test.R = r**2
     ukf_test.P = np.eye(Ns)*1
     x = np.zeros(Ns)
-    P = np.eye(Ns)*10
+    P = np.eye(Ns)*1
 
     x_ukf = []
     x_sensor = []
