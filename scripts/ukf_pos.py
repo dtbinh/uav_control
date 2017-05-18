@@ -12,6 +12,8 @@ import matplotlib.animation as animation
 import sys
 import ukf_uav
 
+from filterpy.kalman import UKF, JulierSigmaPoints
+
 
 def dydt_pos(t, X, uav_t):
     R = np.reshape(X[6:15],(3,3));  # rotation from body to inertial
@@ -113,22 +115,34 @@ if anim_flag:
     pass
 
 
-ukf_test = ukf_uav.UnscentedKalmanFilter(12,12,0.01)
 Ns = 12
-q = 0.2
-r = 0.2
+ukf_test = ukf_uav.UnscentedKalmanFilter(Ns, Ns, 0.01)
+
+q = 1
+r = 0.1
 ukf_test.J = J
 ukf_test.e3 = e3
-ukf_test.Q = q**2*np.eye(Ns)
-ukf_test.R = r**2
-ukf_test.P = np.eye(Ns)*1
+Q = q**2*np.eye(Ns)
+R = r**2
+P = np.eye(Ns)
 x = np.zeros(Ns)
-P = np.eye(Ns)*1
+P = np.eye(Ns)
 
 x_ukf = []
 x_sensor = []
+#sp = JulierSigmaPoints(4,0)
+#ukf_filter = UKF.UnscentedKalmanFilter(3,3,0.01,ukf_test.h,ukf_test.f, sp)
+#for i, state in enumerate(sim):
+#    ukf_filter.predict()
+#    x_obs = state[:3]+ r*(0.5 - np.random.random(3))
+#    x_sensor.append(x_obs)
+#    ukf_filter.update(x_obs)
+#    x = ukf_filter.x
+#    x_ukf.append(x)
+
+#sys.exit()
+x = 0.001*(0.5-np.random.random(Ns))
 for i, k in enumerate(sim):
-    print(i)
     Rot = np.reshape(k[6:15],(-1,9))
     Rot_e = rot_eul(Rot)
     noise = np.zeros(Ns)
@@ -137,21 +151,21 @@ for i, k in enumerate(sim):
     z = ukf_test.sss(x_obs)# + r*(0.5-np.random.random(6))
     x_sensor.append(z)
     ukf_test.Rb = Rot.reshape((3,3))
-    x, P = ukf_test.ukf( x, P, z, ukf_test.Q, ukf_test.R, command_val[i], state_transition = ukf_test.dss, state_observation = ukf_test.sss)
+    x, P = ukf_test.ukf( x, P, z, Q, R, command_val[i], state_transition = ukf_test.dss, state_observation = ukf_test.sss)
     # x_obs = ukf_test.dss(x,command_val[i])# + q*(0.5-np.random.random(Ns))
-    x_ukf.append(k)
+    x_ukf.append(x)
 
 x_estimate = np.array(x_ukf)
 x_sensor = np.array(x_sensor)
 f, (ax0, ax1, ax2) = plt.subplots(3,1)
 ax0.plot(sim[:,0],'b--')
-ax0.plot(x_sensor[:,0],'gx')
+ax0.plot(x_sensor[:,0],'g.')
 ax0.plot(x_estimate[:,0],'r')
 ax1.plot(sim[:,1],'b--')
-ax1.plot(x_sensor[:,1],'gx')
+ax1.plot(x_sensor[:,1],'g.')
 ax1.plot(x_estimate[:,1],'r')
 ax2.plot(sim[:,2],'b--')
-ax2.plot(x_sensor[:,2],'gx')
+ax2.plot(x_sensor[:,2],'g.')
 ax2.plot(x_estimate[:,2],'r')
 
 plt.show()

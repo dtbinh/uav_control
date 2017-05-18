@@ -49,19 +49,20 @@ class UnscentedKalmanFilter(object):
         """State space UAV dynamics"""
         A = np.zeros((12,12))
         for i in range(3):
-            A[i][i], A[i][i+3] = 1, dt
+            A[i][i], A[i][i+3] = 0, dt
         for i in range(6,9):
-            A[i][i], A[i][i+3] = 1, dt
+            A[i][i], A[i][i+3] = 0, dt
             # A[i+6][i+6] = 1
         # TODO: Implement controller input term here
         # noting that u = [F, M] remember to bring them to inertial frame
-        B = np.zeros((self._dim_x, 6))
-        B[5,2] = 1/self.m
-        B[-3:,-3:] = self.J
-        uf = -u[0]*self.Rb.dot(self.e3)
-        uf = np.append( uf, self.Rb.dot(u[1:]))
+        #B = np.zeros((self._dim_x, 6))
+        #B[5,2] = 1/self.m
+        #B[-3:,-3:] = self.J
+        #uf = -u[0]*self.Rb.dot(self.e3)
+        #uf = np.append( uf, self.Rb.dot(u[1:]))
+        #A
         xp = A.dot(x)  #+ self._dt*B.dot(uf)
-        return xp
+        return x + A.dot(x)
 
     def sss(self, x, u = None):
         """Sensor state"""
@@ -132,10 +133,12 @@ class UnscentedKalmanFilter(object):
         z1,Z1,P2,Z2 = self.ut(state_observation, X1,Wm,Wc, n, R)
         P12=X2.dot(np.diag(Wc).dot(Z2.T))
         try:
-            K=P12.dot(inv(P2))
-        except Exception as err:
-            print(err)
-            pdb.set_trace()
+            inv(P2)
+        except:
+            print('non positive def')
+            return x, P
+
+        K=P12.dot(inv(P2))
         x=x1+K.dot(z-z1)
         P=P1-K.dot(P12.T)
         return x, P
@@ -150,32 +153,37 @@ if __name__=='__main__':
     # test.inspect_types()
     # print('test')
     # ukf_t.ukf(x,P, z, Q, R, u)
-    Ns = 2 # number of states
+    Ns = 3 # number of states
     ukf_t = UnscentedKalmanFilter(Ns, Ns, 0.01)
     s = np.zeros(Ns)
     u = np.zeros(Ns)
-    q=0.05
-    r=1.
+    q=0.001
+    r= 1
     Q = q**2*np.eye(Ns)
     R = r**2
     P = np.eye(Ns)
-    x = s+q*np.random.random(Ns)
+    x = s+q*(0.5 - np.random.random(Ns))
     N = 200
     t_sim = np.linspace(0,2,num = N)
     xGT = np.zeros((Ns,N))
-    xGT[0,:]= np.sin(np.pi*t_sim)
+    xGT[0,:] = np.sin(np.pi*t_sim)
+    xGT[1,:] = np.sin(np.pi*t_sim)
     xV = np.zeros((Ns,N))
     sV = np.copy(xV)
     zV = np.zeros((Ns,N))
     for i in range(N):
         x_cur = xGT[:,i]
-        z = ukf_t.h(x_cur+r*(0.5-np.random.random()))
+        z = ukf_t.h(x_cur+r*(0.5-np.random.random(Ns)))
         zV[:,i] = z
         x, P = ukf_t.ukf(x, P, z, Q, R, t_sim[i], state_transition = ukf_t.f, state_observation = ukf_t.h)
         xV[:,i] = x
         #x = ukf_t.f(x,u) + q*np.random.random(Ns)
         pass
-    plt.plot(xGT[0],'b')
-    plt.plot(xV[0],'r.-')
-    plt.plot(zV[0],'gx')
+    f, (ax0,ax1,ax2) = plt.subplots(3,1)
+    ax0.plot(xGT[0],'b')
+    ax0.plot(xV[0],'r.-')
+    ax0.plot(zV[0],'gx')
+    ax1.plot(xGT[1],'b')
+    ax1.plot(xV[1],'r.-')
+    ax1.plot(zV[1],'gx')
     plt.show()
