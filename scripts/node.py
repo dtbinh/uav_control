@@ -18,12 +18,15 @@ from numpy.linalg import inv
 class uav(object):
 
     def __init__(self, motor_address = None):
-        rospy.init_node('uav')
-        self.uav_pose = rospy.Subscriber('/vicon/Jetson/pose',PoseStamped, self.mocap_sub)
+        self.uav_name = rospy.get_param('uav_name')
+        self.motor_address = np.fromstring(rospy.get_param('motor_address'), dtype=int,sep=',')
+        self._dt = rospy.get_param('dt')
+
+        rospy.init_node(self.uav_name)
+        self.uav_pose = rospy.Subscriber('/vicon/'+self.uav_name+'/pose',PoseStamped, self.mocap_sub)
         self.uav_w = rospy.Subscriber('imu/imu',Imu, self.imu_sub)
         self.tf_subscriber = tf.TransformListener()
         self.tf = tf.TransformerROS(True,rospy.Duration(10.0))
-        self._dt = 0.01
         self.x = np.zeros(3)
         self.v = np.zeros(3)
         self.R = np.eye(3)
@@ -35,21 +38,23 @@ class uav(object):
         J = np.diag([0.0820, 0.0845, 0.1377])
         e3 = np.array([0.,0.,1.])
         self.controller = Controller(J,e3)
+        #self.controller.kR 
+        #self.controller.kx
         self.F = None
         self.M = None
-        l = 0.22
-        c_tf = 0.1
+        l = rospy.get_param('controller/l')
+        c_tf = rospy.get_param('controller/c_tf')
         self.A = np.array([[1.,1.,1.,1.],[0,-l,0,l],[l,0,-l,0],[c_tf,-c_tf,c_tf,-c_tf]])
         self.invA = inv(self.A)
-        if motor_address != None:
-            self.hw_interface = pyMotor(motor_address)
+        if self.motor_address != None:
+            self.hw_interface = pyMotor(self.motor_address)
         #self.ukf = ukf_uav.UnscentedKalmanFilter(12,6,1)
         #self.unscented_kalman_filter()
         rospy.spin()
 
     def mocap_sub(self, msg):
         try:
-            (trans,rot) = self.tf_subscriber.lookupTransform('/world', '/Jetson', rospy.Time(0))
+            (trans,rot) = self.tf_subscriber.lookupTransform('/world', self.uav_name, rospy.Time(0))
             self.x = trans
             self.R = self.tf.fromTranslationRotation(trans,rot)[:3,:3]
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
@@ -142,4 +147,4 @@ class uav(object):
 
 if __name__ == '__main__':
     print('starting tf_subscriber node')
-    uav_test = uav([44,41,42,43])
+    uav_test = uav()

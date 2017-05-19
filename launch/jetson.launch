@@ -1,0 +1,8 @@
+<launch>
+    <rosparam file="$(find uav_control)/params/jetson.yaml" />
+    <param name="uav_name" value="Jetson"/>
+    <param name="motor_address" value="44,41,42,43" />
+    <param name="dt" value="0.01" />
+    <node name="Jetson" pkg="uav_control" type="node.py" output="screen">
+    </node>
+</launch>
