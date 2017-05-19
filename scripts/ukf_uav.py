@@ -55,14 +55,14 @@ class UnscentedKalmanFilter(object):
             # A[i+6][i+6] = 1
         # TODO: Implement controller input term here
         # noting that u = [F, M] remember to bring them to inertial frame
-        #B = np.zeros((self._dim_x, 6))
-        #B[5,2] = 1/self.m
-        #B[-3:,-3:] = self.J
-        #uf = -u[0]*self.Rb.dot(self.e3)
-        #uf = np.append( uf, self.Rb.dot(u[1:]))
+        B = np.zeros((self._dim_x, 6))
+        B[5,2] = 1/self.m
+        B[-3:,-3:] = self.J
+        uf = -u[0]*self.Rb.dot(self.e3)
+        uf = np.append( uf, self.Rb.dot(u[1:]))
         #A
         xp = A.dot(x)  #+ self._dt*B.dot(uf)
-        return x + A.dot(x)
+        return x + A.dot(x) + dt*B.dot(uf)
 
     def sss(self, x, u = None):
         """Sensor state"""
@@ -104,6 +104,25 @@ class UnscentedKalmanFilter(object):
         Xd = X - np.tile(mu,(m,1)).T
         Sigma = Xd.dot(np.diag(wc.T).dot(Xd.T)) + Q
         return (mu, X, Sigma, Xd)
+    def unscented_transform(self, sigmas, Wm, Wc,):
+        x = np.dot(Wm, sigmas)
+        y = simgas - x[np.newaxis,:]
+        P = y.T.dot(np.diag(Wc)).dot(y)
+        return x,P
+
+    def predict(self, dt = None, UT=None):
+        if dt is None:
+            dt = self._dt
+        sigmas = self.sigmaPoints(self.x, self.P)
+        self.x, self.P = self.ut(self.dss, self.X, self.Wm, self.Wc, self.n, self.Q, self.u)
+
+    def update(self, z, R=None, UT=None):
+        if z is None:
+            return
+
+        zp, Pz = self.unscented_transform( self.Wm, self.Wc, self.n, self.R)
+        K = np.dot(Pxz,inv(Pz))
+
 
     def ukf(self, x, P, z, Q, R, u, state_transition = None, state_observation = None):
         """UKF

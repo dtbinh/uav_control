@@ -1,7 +1,4 @@
 from __future__ import print_function, division, absolute_import
-
-from kinematics import attitude as att
-
 import numpy as np
 import numpy.linalg as la
 import pdb
@@ -34,14 +31,14 @@ class Controller(object):
     """
     def __init__(self, J, e3):
         """Initialization of UAV with known pythical properties"""
-        self.m = 4.34
+        self.m = 1.71
         self.g = 9.81
         self.J = J
         self.e3 = e3
-        self.kR = 8.81; # attitude gains
-        self.kW = 2.54; # attitude gains
-        self.kx = 16.*self.m # position gains
-        self.kv = 5.6*self.m # position gains
+        self.kR = 1.81; # attitude gains
+        self.kW = 1.54; # attitude gains
+        self.kx = 2*self.m # position gains
+        self.kv = 3*self.m # position gains
         print('UAV: initialized')
 
     def position_control(self, R, W, x, v, d_in):

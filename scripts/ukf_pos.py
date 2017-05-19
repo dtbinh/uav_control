@@ -35,7 +35,7 @@ def dydt_pos(t, X, uav_t):
     f = np.array([0,0,0])
     M = np.array([0,0,0])
 
-    xd = np.array([0.5*np.sin(t), 0, t])
+    xd = np.array([np.sin(np.pi*t/6), np.cos(np.pi*t/6)-1, t])
     xd_dot = np.array([0.5 , 0, 1])
     b1d = np.array([1., 0.,0.])
     d_in = (xd, xd_dot, xd_ddot, xd_dddot, xd_ddddot,
@@ -59,14 +59,14 @@ anim_flag = False
 J = np.diag([0.0820, 0.0845, 0.1377])
 e3 = np.array([0.,0.,1.])
 uav_t = UAV(J, e3)
-t_max = 2
+t_max = 12
 N = 100*t_max + 1
 t = np.linspace(0,t_max,N)
 xd = np.array([0.,0.,0.])
 # Initial Conditions
 R0 = [[1., 0., 0.],
-        [0., -0.9995, -0.0314],
-        [0., 0.0314, -0.9995]] # initial rotation
+      [0., -0.9995, -0.0314],
+      [0., 0.0314, -0.9995]] # initial rotation
 R0 = np.eye(3)
 W0 = [0.,0.,0.];   # initial angular velocity
 x0 = [0.,0.,0.];  # initial position (altitude?0)
@@ -119,41 +119,60 @@ Ns = 12
 ukf_test = ukf_uav.UnscentedKalmanFilter(Ns, Ns, 0.01)
 
 q = 1
-r = 0.1
+r = 1
 ukf_test.J = J
 ukf_test.e3 = e3
 Q = q**2*np.eye(Ns)
 R = r**2
-P = np.eye(Ns)
 x = np.zeros(Ns)
 P = np.eye(Ns)
 
 x_ukf = []
 x_sensor = []
-#sp = JulierSigmaPoints(4,0)
-#ukf_filter = UKF.UnscentedKalmanFilter(3,3,0.01,ukf_test.h,ukf_test.f, sp)
-#for i, state in enumerate(sim):
-#    ukf_filter.predict()
-#    x_obs = state[:3]+ r*(0.5 - np.random.random(3))
-#    x_sensor.append(x_obs)
-#    ukf_filter.update(x_obs)
-#    x = ukf_filter.x
-#    x_ukf.append(x)
-
-#sys.exit()
-x = 0.001*(0.5-np.random.random(Ns))
-for i, k in enumerate(sim):
-    Rot = np.reshape(k[6:15],(-1,9))
+sp = JulierSigmaPoints(Ns,5)
+def state_tran(x, dt):
+    A = np.eye(12)
+    for i in range(3):
+        A[i,i+3] = dt
+        A[i+6,i+9] = dt
+    return np.dot(A,x)
+def obs_state(x):
+    A = np.zeros((6,12))
+    for i in range(3):
+        A[i,i+3] = 1
+        A[i+3, i + 9] = 1
+    return np.dot(A,x)
+ukf_filter = UKF.UnscentedKalmanFilter(dim_x=Ns,dim_z=6, dt=0.01, hx = obs_state, fx = state_tran, points = sp)
+ukf_filter.Q = Q
+ukf_filter.R = R
+ukf_filter.P = P
+for i, state in enumerate(sim):
+    ukf_filter.predict()
+    Rot = np.reshape(state[6:15],(-1,9))
     Rot_e = rot_eul(Rot)
     noise = np.zeros(Ns)
     noise[:3] = r*(0.5-np.random.random(3))
-    x_obs = np.concatenate((k[:6],np.reshape(Rot_e,(3,)),k[-3:])) + noise
-    z = ukf_test.sss(x_obs)# + r*(0.5-np.random.random(6))
-    x_sensor.append(z)
-    ukf_test.Rb = Rot.reshape((3,3))
-    x, P = ukf_test.ukf( x, P, z, Q, R, command_val[i], state_transition = ukf_test.dss, state_observation = ukf_test.sss)
-    # x_obs = ukf_test.dss(x,command_val[i])# + q*(0.5-np.random.random(Ns))
+    x_obs = np.concatenate((state[:6],np.reshape(Rot_e,(3,)),state[-3:])) # + noise
+    x_obs[:3] += r*(0.5 - np.random.random(3))
+    x_sensor.append(x_obs)
+    ukf_filter.update(obs_state(x_obs))
+    x = ukf_filter.x
     x_ukf.append(x)
+
+#sys.exit()
+#x = 0.001*(0.5-np.random.random(Ns))
+#for i, k in enumerate(sim):
+#    Rot = np.reshape(k[6:15],(-1,9))
+#    Rot_e = rot_eul(Rot)
+#    noise = np.zeros(Ns)
+#    noise[:3] = r*(0.5-np.random.random(3))
+#    x_obs = np.concatenate((k[:6],np.reshape(Rot_e,(3,)),k[-3:])) + noise
+#    z = ukf_test.sss(x_obs)# + r*(0.5-np.random.random(6))
+#    x_sensor.append(z)
+#    ukf_test.Rb = Rot.reshape((3,3))
+#    x, P = ukf_test.ukf( x, P, z, Q, R, command_val[i], state_transition = ukf_test.dss, state_observation = ukf_test.sss)
+#    # x_obs = ukf_test.dss(x,command_val[i])# + q*(0.5-np.random.random(Ns))
+#    x_ukf.append(x)
 
 x_estimate = np.array(x_ukf)
 x_sensor = np.array(x_sensor)
