@@ -38,6 +38,7 @@ class uav(object):
         J = np.diag([0.0820, 0.0845, 0.1377])
         e3 = np.array([0.,0.,1.])
         self.controller = Controller(J,e3)
+        self.controller.m = rospy.get_param('controller/m')
         #self.controller.kR 
         #self.controller.kx
         self.F = None
@@ -46,7 +47,7 @@ class uav(object):
         c_tf = rospy.get_param('controller/c_tf')
         self.A = np.array([[1.,1.,1.,1.],[0,-l,0,l],[l,0,-l,0],[c_tf,-c_tf,c_tf,-c_tf]])
         self.invA = inv(self.A)
-        if self.motor_address != None:
+        if self.motor_address is None:
             self.hw_interface = pyMotor(self.motor_address)
         #self.ukf = ukf_uav.UnscentedKalmanFilter(12,6,1)
         #self.unscented_kalman_filter()
