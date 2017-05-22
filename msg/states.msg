@@ -6,15 +6,17 @@ Header header
 # east north up (ENU)
 # desired position, velocity, acceleration in (ENU)
 float32[9] xc # + xc_dot, xc_2dot, xc_3dot
+float32[9] xc_ned # desired command in NED frame
 
 # vicon pose, velocity (ENU)
-geometry_msgs/Vector3 x_v
-geometry_msgs/Quaternion q_v
-geometry_msgs/Vector3 v_v
+float32[3] x_v
+float32[4] q_v
+float32[9] R_v
+float32[3] v_v
 
 # IMU attitude, angular velocity (NED)
-geometry_msgs/Vector3 w_imu
-geometry_msgs/Quaternion q_imu
+float32[3] w_imu
+float32[4] q_imu
 
 # desired attitude (NED)
 float32[9] Rc
@@ -22,6 +24,11 @@ float32[9] Rc_dot
 float32[9] Rc_2dot
 float32[6] omega_c # + omaga_c_dot
 float32[9] b1d # + b1d_dot, b1d_2dot
+
+# position attitude in NED
+float32[6] x # x,v
+float32[9] R
+float32[3] omega
 
 # position, attitude error vectors (NED)
 float32[6] ex # + ev
