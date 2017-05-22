@@ -13,7 +13,7 @@ from i2c_cython.hw_interface import pyMotor
 # import ukf_uav
 from filterpy.kalman import UKF, JulierSigmaPoints
 from numpy.linalg import inv
-
+from uav_control.msg import states
 
 class uav(object):
 
@@ -22,6 +22,7 @@ class uav(object):
         self.motor_address = np.fromstring(rospy.get_param('motor_address'), dtype=int,sep=',')
         self._dt = rospy.get_param('dt')
 
+        # initialization of ROS node
         rospy.init_node(self.uav_name)
         self.uav_pose = rospy.Subscriber('/vicon/'+self.uav_name+'/pose',PoseStamped, self.mocap_sub)
         self.uav_w = rospy.Subscriber('imu/imu',Imu, self.imu_sub)
@@ -39,8 +40,8 @@ class uav(object):
         e3 = np.array([0.,0.,1.])
         self.controller = Controller(J,e3)
         self.controller.m = rospy.get_param('controller/m')
-        #self.controller.kR 
-        #self.controller.kx
+        #self.controller.kR = rospy.get_param('controller/kR')
+        #self.controller.kx = rospy.get_param('controller/kx')
         self.F = None
         self.M = None
         l = rospy.get_param('controller/l')
@@ -51,6 +52,8 @@ class uav(object):
             self.hw_interface = pyMotor(self.motor_address)
         #self.ukf = ukf_uav.UnscentedKalmanFilter(12,6,1)
         #self.unscented_kalman_filter()
+        self.pub_states = rospy.Publisher('uav_states', states, queue_size=10)
+        self.uav_states = states()
         rospy.spin()
 
     def mocap_sub(self, msg):
@@ -65,10 +68,12 @@ class uav(object):
         pass
 
     def imu_sub(self, msg):
+        self.imu_w = msg.angular_velocity
         w = msg.angular_velocity
         acc = msg.linear_acceleration
         self.linear_acceleration = np.array([acc.x,acc.y,acc.z])
         self.linear_velocity = self.linear_acceleration*0.01
+        self.imu_q = msg.orientation
         orient = msg.orientation
         self.orientation = np.array([orient.x,orient.y,orient.z,orient.w])
         self.euler_angle = tf.transformations.euler_from_quaternion(self.orientation)
@@ -78,18 +83,28 @@ class uav(object):
         self.W = np.array([w.x,w.y,w.z])
         #self.run_ukf()
         self.control()
+        self.publish_states()
 
     def control(self):
         self.F, self.M = self.controller.position_control( self.R, self.W, self.x, self.v, self.x_c)
         command = np.concatenate(([self.F],self.M))
         command = np.dot(self.invA, command)
         throttle = np.rint(1./0.03*(command+0.37))
-        print(throttle)
-        #self.motor_command(throttle)
+        # print(throttle)
+        # print(self.motor_command(throttle))
+        # take only current voltage and rpm from the motor sensor rpm*780/14
 
     def motor_command(self, command):
         self.hw_interface.motor_command(command, True)
         pass
+
+    def publish_states(self):
+        self.uav_states.header.stamp = rospy.get_rostime()
+        self.uav_states.header.frame_id = self.uav_name
+        self.uav_states.q_imu = self.imu_q
+        self.uav_states.w_imu = self.imu_w
+        # TODO add all the states updates
+        self.pub_states.publish(self.uav_states)
 
     def unscented_kalman_filter(self):
         def state_tran(x, dt):
