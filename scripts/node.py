@@ -11,7 +11,7 @@ from i2c_cython.hw_interface import pyMotor
 # roslib.load_manifest("estimation")
 # from estimation import ukf_uav
 # import ukf_uav
-from filterpy.kalman import UKF, JulierSigmaPoints
+# from filterpy.kalman import UKF, JulierSigmaPoints
 from numpy.linalg import inv
 from uav_control.msg import states
 
@@ -33,7 +33,7 @@ class uav(object):
         self.R = np.eye(3)
         self.W = np.zeros(3)
         b1 = np.array([1,0,0])
-        self.x_c = (np.array([0,0,1.5]), np.zeros(3),np.zeros(3),np.zeros(3),np.zeros(3),
+        self.x_c = (np.array([0,0,-1.5]), np.zeros(3),np.zeros(3),np.zeros(3),np.zeros(3),
                 b1, np.zeros(3), np.zeros(3),
                 np.eye(3),np.zeros(3),np.zeros(3))
         J = np.diag([0.0820, 0.0845, 0.1377])
@@ -48,19 +48,24 @@ class uav(object):
         c_tf = rospy.get_param('controller/c_tf')
         self.A = np.array([[1.,1.,1.,1.],[0,-l,0,l],[l,0,-l,0],[c_tf,-c_tf,c_tf,-c_tf]])
         self.invA = inv(self.A)
+        self.R_U2D = np.array([[1.,0,0],[0,-1,0],[0,0,-1]])
         if self.motor_address is None:
             self.hw_interface = pyMotor(self.motor_address)
         #self.ukf = ukf_uav.UnscentedKalmanFilter(12,6,1)
         #self.unscented_kalman_filter()
         self.pub_states = rospy.Publisher('uav_states', states, queue_size=10)
         self.uav_states = states()
+        #self.uav_states.xc = self.x_c
         rospy.spin()
 
     def mocap_sub(self, msg):
         try:
             (trans,rot) = self.tf_subscriber.lookupTransform('/world', self.uav_name, rospy.Time(0))
             self.x = trans
+            self.uav_states.x_v = trans
+            self.uav_states.q_v = rot
             self.R = self.tf.fromTranslationRotation(trans,rot)[:3,:3]
+            self.uav_states.R_v = self.R.flatten()
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
             print('No transform between vicon and UAV found')
 
@@ -79,6 +84,7 @@ class uav(object):
         self.euler_angle = tf.transformations.euler_from_quaternion(self.orientation)
         euler_angle = (self.euler_angle[0], self.euler_angle[1], self.euler_angle[2]-0.7)
         self.R = self.tf.fromTranslationRotation((0,0,0), self.orientation)[:3,:3]
+        self.uav_states.R_imu = self.R.flatten()
         self.orientation = tf.transformations.quaternion_from_euler(euler_angle[0],euler_angle[1],euler_angle[2])
         self.W = np.array([w.x,w.y,w.z])
         #self.run_ukf()
@@ -86,24 +92,53 @@ class uav(object):
         self.publish_states()
 
     def control(self):
+        self.R = self.R_U2D.dot(np.array(self.uav_states.R_imu).reshape(3,3))
+        self.x = self.R_U2D.dot(self.x)
+        self.v = self.R_U2D.dot(self.v)
+
+        self.uav_states.R = self.R.flatten()
         self.F, self.M = self.controller.position_control( self.R, self.W, self.x, self.v, self.x_c)
+        self.uav_states.force = self.F
+        self.uav_states.moment = self.M
+        #self.uav_states.gain_position = self.controller.kx
         command = np.concatenate(([self.F],self.M))
         command = np.dot(self.invA, command)
+        self.uav_states.f_motor = command
+        command = [val if val > 0 else 0 for val in command]
+        command = np.array([val if val < 6 else 6 for val in command])
+        self.uav_states.f_motor_sat = command
         throttle = np.rint(1./0.03*(command+0.37))
-        # print(throttle)
+        self.uav_states.throttle = throttle
         # print(self.motor_command(throttle))
         # take only current voltage and rpm from the motor sensor rpm*780/14
+        #self.uav_states.motor_power = []
+        #self.uav_states.force = self.F
+        #self.uav_states.moment = self.M
+        #self.uav_states.f_motor = command
+        #self.uav_states.f_motor_sat = command_sat
+        #self.uav_states.throttle = throttle
 
     def motor_command(self, command):
         self.hw_interface.motor_command(command, True)
         pass
 
+    def vector_to_array(self,msg_vec):
+        return np.array([msg_vec.x,msg_vec.y,msg_vec.z])
+
+    def quaternion_to_array(self,msg_vec):
+        return np.array([msg_vec.x,msg_vec.y,msg_vec.z, msg_vec.w])
+
     def publish_states(self):
         self.uav_states.header.stamp = rospy.get_rostime()
         self.uav_states.header.frame_id = self.uav_name
-        self.uav_states.q_imu = self.imu_q
-        self.uav_states.w_imu = self.imu_w
+        self.uav_states.q_imu = self.quaternion_to_array(self.imu_q)
+        self.uav_states.w_imu = self.vector_to_array(self.imu_w)
+
         # TODO add all the states updates
+        # add down-frame desired values
+        self.uav_states.Rc = self.controller.Rd.flatten()
+        self.uav_states.ex = np.array(self.controller.ex).flatten()
+        self.uav_states.eR = np.array(self.controller.eR).flatten()
         self.pub_states.publish(self.uav_states)
 
     def unscented_kalman_filter(self):

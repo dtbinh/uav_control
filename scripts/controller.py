@@ -39,6 +39,8 @@ class Controller(object):
         self.kW = 1.54; # attitude gains
         self.kx = 2*self.m # position gains
         self.kv = 3*self.m # position gains
+        self.ex = None
+        self.eR = None
         print('UAV: initialized')
 
     def position_control(self, R, W, x, v, d_in):
@@ -52,6 +54,7 @@ class Controller(object):
         (xd, xd_dot, xd_2dot, xd_3dot, xd_4dot, b1d, b1d_dot, b1d_ddot,
                 Rd, Wd, Wd_dot) = d_in
         (ex, ev) = position_errors( x, xd, v, xd_dot)
+        self.ex = [ex,ev]
 
         f = np.dot(self.kx*ex + self.kv*ev + self.m*self.g*self.e3
                 - self.m*xd_2dot, R.dot(self.e3) )
@@ -73,8 +76,9 @@ class Controller(object):
         A_2dot = -self.kx*ex_2dot - self.kv*ex_3dot + self.m*xd_4dot
 
         (Rd, Wd, Wd_dot) = get_Rc(A, A_dot, A_2dot , b1d, b1d_dot, b1d_ddot)
-
+        self.Rd = Rd
         (eR, eW) = attitude_errors( R, Rd, W, Wd )
+        self.eR = [eR, eW]
         M= (-self.kR*eR - self.kW*eW + np.cross(W, self.J.dot(W))
             - self.J.dot(W_hat.dot(R.T.dot(Rd.dot(Wd)))
             - R.T.dot(Rd.dot(Wd_dot))))

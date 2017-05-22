@@ -17,6 +17,7 @@ float32[3] v_v
 # IMU attitude, angular velocity (NED)
 float32[3] w_imu
 float32[4] q_imu
+float32[9] R_imu
 
 # desired attitude (NED)
 float32[9] Rc
