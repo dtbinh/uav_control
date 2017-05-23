@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function, division, with_statement
 import rospy
 import tf
 import numpy as np
@@ -40,6 +41,8 @@ class uav(object):
         e3 = np.array([0.,0.,1.])
         self.controller = Controller(J,e3)
         self.controller.m = rospy.get_param('controller/m')
+        self.controller.kx, self.controller.kv = rospy.get_param('controller/gain/pos/kp'), rospy.get_param('controller/gain/pos/kd')
+        self.controller.kR, self.controller.kW = rospy.get_param('controller/gain/att/kp'), rospy.get_param('controller/gain/att/kd')
         #self.controller.kR = rospy.get_param('controller/kR')
         #self.controller.kx = rospy.get_param('controller/kx')
         self.F = None
@@ -64,11 +67,12 @@ class uav(object):
             self.x = trans
             self.uav_states.x_v = trans
             self.uav_states.q_v = rot
-            self.R = self.tf.fromTranslationRotation(trans,rot)[:3,:3]
-            self.uav_states.R_v = self.R.flatten()
+            print(tf.transformations.euler_from_quaternion(rot))
+            self.R_v = self.tf.fromTranslationRotation(trans,rot)[:3,:3]
+            self.uav_states.R_v = self.R_v.flatten().tolist()
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
             print('No transform between vicon and UAV found')
-
+        self.control()
     def camera_sub(self):
         pass
 
@@ -77,39 +81,51 @@ class uav(object):
         w = msg.angular_velocity
         acc = msg.linear_acceleration
         self.linear_acceleration = np.array([acc.x,acc.y,acc.z])
-        self.linear_velocity = self.linear_acceleration*0.01
+        self.linear_velocity = self.linear_acceleration*self._dt
         self.imu_q = msg.orientation
         orient = msg.orientation
         self.orientation = np.array([orient.x,orient.y,orient.z,orient.w])
         self.euler_angle = tf.transformations.euler_from_quaternion(self.orientation)
         euler_angle = (self.euler_angle[0], self.euler_angle[1], self.euler_angle[2]-0.7)
-        self.R = self.tf.fromTranslationRotation((0,0,0), self.orientation)[:3,:3]
-        self.uav_states.R_imu = self.R.flatten()
+        #self.R = self.tf.fromTranslationRotation((0,0,0), self.orientation)[:3,:3]
+        self.uav_states.R_imu = self.R.flatten().tolist()
         self.orientation = tf.transformations.quaternion_from_euler(euler_angle[0],euler_angle[1],euler_angle[2])
         self.W = np.array([w.x,w.y,w.z])
         #self.run_ukf()
-        self.control()
+        #self.control()
+        br = tf.TransformBroadcaster()
+        br.sendTransform((0,0,0), (1,0,0,0),
+                msg.header.stamp,
+                'imu',
+                'Jetson')
         self.publish_states()
 
     def control(self):
         self.R = self.R_U2D.dot(np.array(self.uav_states.R_imu).reshape(3,3))
-        self.x = self.R_U2D.dot(self.x)
+        self.x_ned = self.R_U2D.dot(self.x)
+        self.uav_states.x = self.x_ned
         self.v = self.R_U2D.dot(self.v)
-
-        self.uav_states.R = self.R.flatten()
-        self.F, self.M = self.controller.position_control( self.R, self.W, self.x, self.v, self.x_c)
+        self.R = (self.R_U2D.dot(self.R_v)).dot(self.R_U2D)
+        self.uav_states.R = self.R.flatten().tolist()
+        self.uav_states.xc = self.x_c[0]
+        self.uav_states.xc_ned = self.R_U2D.dot(self.uav_states.xc)
+        self.F, self.M = self.controller.position_control( self.R, self.W, self.x_ned, self.v, self.x_c)
+        self.uav_states.b1d = self.controller.b1d
         self.uav_states.force = self.F
-        self.uav_states.moment = self.M
+        self.uav_states.moment = self.M.tolist()
+        self.uav_states.omega_c = np.array([self.controller.Wd,self.controller.Wd_dot]).flatten().tolist()
         #self.uav_states.gain_position = self.controller.kx
         command = np.concatenate(([self.F],self.M))
         command = np.dot(self.invA, command)
-        self.uav_states.f_motor = command
+        self.uav_states.f_motor = command.tolist()
         command = [val if val > 0 else 0 for val in command]
         command = np.array([val if val < 6 else 6 for val in command])
-        self.uav_states.f_motor_sat = command
+        self.uav_states.f_motor_sat = command.tolist()
         throttle = np.rint(1./0.03*(command+0.37))
-        self.uav_states.throttle = throttle
-        # print(self.motor_command(throttle))
+        self.uav_states.throttle = throttle.tolist()
+        if self.motor_address is not None:
+            #self.motor_power = self.motor_command(throttle)
+            pass
         # take only current voltage and rpm from the motor sensor rpm*780/14
         #self.uav_states.motor_power = []
         #self.uav_states.force = self.F
@@ -131,14 +147,16 @@ class uav(object):
     def publish_states(self):
         self.uav_states.header.stamp = rospy.get_rostime()
         self.uav_states.header.frame_id = self.uav_name
-        self.uav_states.q_imu = self.quaternion_to_array(self.imu_q)
-        self.uav_states.w_imu = self.vector_to_array(self.imu_w)
+        self.uav_states.q_imu = self.quaternion_to_array(self.imu_q).tolist()
+        self.uav_states.w_imu = self.vector_to_array(self.imu_w).tolist()
+        self.uav_states.gain_position = [self.controller.kx,self.controller.kv,0]
+        self.uav_states.gain_attitude = [self.controller.kR,self.controller.kW,0]
 
-        # TODO add all the states updates
-        # add down-frame desired values
-        self.uav_states.Rc = self.controller.Rd.flatten()
-        self.uav_states.ex = np.array(self.controller.ex).flatten()
-        self.uav_states.eR = np.array(self.controller.eR).flatten()
+        ## TODO add all the states updates
+        ## add down-frame desired values
+        self.uav_states.Rc = self.controller.Rd.flatten().tolist()
+        self.uav_states.ex = np.array(self.controller.ex).flatten().tolist()
+        self.uav_states.eR = np.array(self.controller.eR).flatten().tolist()
         self.pub_states.publish(self.uav_states)
 
     def unscented_kalman_filter(self):

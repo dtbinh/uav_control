@@ -53,8 +53,10 @@ class Controller(object):
         """
         (xd, xd_dot, xd_2dot, xd_3dot, xd_4dot, b1d, b1d_dot, b1d_ddot,
                 Rd, Wd, Wd_dot) = d_in
+        self.b1d = b1d
         (ex, ev) = position_errors( x, xd, v, xd_dot)
-        self.ex = [ex,ev]
+        self.ex = ex
+        self.ev = ev
 
         f = np.dot(self.kx*ex + self.kv*ev + self.m*self.g*self.e3
                 - self.m*xd_2dot, R.dot(self.e3) )
@@ -77,8 +79,11 @@ class Controller(object):
 
         (Rd, Wd, Wd_dot) = get_Rc(A, A_dot, A_2dot , b1d, b1d_dot, b1d_ddot)
         self.Rd = Rd
+        self.Wd = Wd
+        self.Wd_dot = Wd_dot
         (eR, eW) = attitude_errors( R, Rd, W, Wd )
-        self.eR = [eR, eW]
+        self.eR = eR
+        self.eW = eW
         M= (-self.kR*eR - self.kW*eW + np.cross(W, self.J.dot(W))
             - self.J.dot(W_hat.dot(R.T.dot(Rd.dot(Wd)))
             - R.T.dot(Rd.dot(Wd_dot))))

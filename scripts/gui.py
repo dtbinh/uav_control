@@ -1,6 +1,3 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
-import tkinter
-top = tkinter.Tk()
-
-top.mainloop()
+import pyqt5
