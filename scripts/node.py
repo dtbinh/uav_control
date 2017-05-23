@@ -25,16 +25,14 @@ class uav(object):
 
         # initialization of ROS node
         rospy.init_node(self.uav_name)
-        self.uav_pose = rospy.Subscriber('/vicon/'+self.uav_name+'/pose',PoseStamped, self.mocap_sub)
-        self.uav_w = rospy.Subscriber('imu/imu',Imu, self.imu_sub)
-        self.tf_subscriber = tf.TransformListener()
         self.tf = tf.TransformerROS(True,rospy.Duration(10.0))
         self.x = np.zeros(3)
         self.v = np.zeros(3)
         self.R = np.eye(3)
+        self.R_v = np.eye(3)
         self.W = np.zeros(3)
         b1 = np.array([1,0,0])
-        self.x_c = (np.array([0,0,-1.5]), np.zeros(3),np.zeros(3),np.zeros(3),np.zeros(3),
+        self.x_c = (np.array([0,0,-1.2]), np.zeros(3),np.zeros(3),np.zeros(3),np.zeros(3),
                 b1, np.zeros(3), np.zeros(3),
                 np.eye(3),np.zeros(3),np.zeros(3))
         J = np.diag([0.0820, 0.0845, 0.1377])
@@ -52,16 +50,33 @@ class uav(object):
         self.A = np.array([[1.,1.,1.,1.],[0,-l,0,l],[l,0,-l,0],[c_tf,-c_tf,c_tf,-c_tf]])
         self.invA = inv(self.A)
         self.R_U2D = np.array([[1.,0,0],[0,-1,0],[0,0,-1]])
-        if self.motor_address is None:
-            self.hw_interface = pyMotor(self.motor_address)
+        if self.motor_address is not None:
+            self.motor = pyMotor(self.motor_address)
+            for k in range(200):
+                self.motor.motor_command([60,60,60,60],True)
+                time.sleep(0.01)
         #self.ukf = ukf_uav.UnscentedKalmanFilter(12,6,1)
         #self.unscented_kalman_filter()
         self.pub_states = rospy.Publisher('uav_states', states, queue_size=10)
         self.uav_states = states()
         #self.uav_states.xc = self.x_c
-        self.dt_vicon = 0
-        self.time_vicon = 0
+        self.tf_subscriber = tf.TransformListener()
+        self.uav_w = rospy.Subscriber('imu/imu',Imu, self.imu_sub)
+        self.dt_vicon = 0.01
+        self.time_vicon = rospy.get_rostime().to_sec()
+        self.uav_pose = rospy.Subscriber('/vicon/'+self.uav_name+'/pose',PoseStamped, self.mocap_sub)
+        self.v_ave = np.array([0,0,0])
+        self.v_array = []
         rospy.spin()
+
+    def v_update(self):
+        if len(self.v_array) < 10:
+            self.v_array.append(self.v)
+        else:
+            self.v_array.pop(0)
+            self.v_array.append(self.v)
+            self.v_ave = np.mean(self.v_array, axis = 0)
+
 
     def mocap_sub(self, msg):
         try:
@@ -69,15 +84,16 @@ class uav(object):
             self.time_vicon = msg.header.stamp.to_sec()
             (trans,rot) = self.tf_subscriber.lookupTransform('/world', self.uav_name, rospy.Time(0))
             self.v = [(x_c - x_p)/self.dt_vicon for x_c, x_p in zip(trans, self.x)]
+            self.v_update()
             self.x = trans
             self.uav_states.x_v = trans
-            self.uav_states.v_v = self.v
+            self.uav_states.v_v = self.v_ave
             self.uav_states.q_v = rot
             self.R_v = self.tf.fromTranslationRotation(trans,rot)[:3,:3]
             self.uav_states.R_v = self.R_v.flatten().tolist()
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
             print('No transform between vicon and UAV found')
-        self.control()
+        #self.control()
     def camera_sub(self):
         pass
 
@@ -98,7 +114,7 @@ class uav(object):
         self.W = np.array([w.x,w.y,w.z])
         self.uav_states.W = self.W
         #self.run_ukf()
-        #self.control()
+        self.control()
         br = tf.TransformBroadcaster()
         br.sendTransform((0,0,0), (1,0,0,0),
                 msg.header.stamp,
@@ -107,16 +123,16 @@ class uav(object):
         self.publish_states()
 
     def control(self):
-        self.R = self.R_U2D.dot(np.array(self.uav_states.R_imu).reshape(3,3))
+        #self.R = self.R_U2D.dot(np.array(self.uav_states.R_imu).reshape(3,3))
         self.x_ned = self.R_U2D.dot(self.x)
         self.uav_states.x = self.x_ned.tolist()
-        self.v = self.R_U2D.dot(self.v)
-        self.uav_states.v = self.v
-        self.R = (self.R_U2D.dot(self.R_v)).dot(self.R_U2D)
+        self.v_ave_ned = self.R_U2D.dot(self.v_ave)
+        self.uav_states.v = self.v_ave_ned
+        self.R = self.R_U2D.dot(self.R_v.dot(self.R_U2D))
         self.uav_states.R = self.R.flatten().tolist()
         self.uav_states.xc = self.x_c[0].tolist()
         self.uav_states.xc_ned = self.R_U2D.dot(self.uav_states.xc).tolist()
-        self.F, self.M = self.controller.position_control( self.R, self.W, self.x_ned, self.v, self.x_c)
+        self.F, self.M = self.controller.position_control( self.R, self.W, self.x_ned, self.v_ave_ned, self.x_c)
         self.uav_states.b1d = self.controller.b1d.tolist()
         self.uav_states.force = self.F
         self.uav_states.moment = self.M.tolist()
@@ -135,8 +151,9 @@ class uav(object):
         self.uav_states.f_motor_sat = command.tolist()
         throttle = np.rint(1./0.03*(command+0.37))
         self.uav_states.throttle = throttle.tolist()
-        if self.motor_address is not None:
-            #self.motor_power = self.motor_command(throttle)
+        motor_on = True
+        if self.motor_address is not None and motor_on:
+            self.motor.motor_command(throttle,True)
             pass
         # take only current voltage and rpm from the motor sensor rpm*780/14
         #self.uav_states.motor_power = []

@@ -12,12 +12,12 @@ controller:
     c_tf: 0.12
     gain:
         att:
-            kp: 0.5
-            kd: 0.2
+            kp: 0.8
+            kd: 0.5
             ki: 0.01
         pos:
-            kp: 6.5
-            kd: 4.0
+            kp: 1.5
+            kd: 1.0
             ki: 0.01
     saturation:
         x: 0.1

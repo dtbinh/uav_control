@@ -1,5 +1,5 @@
 <launch>
-    <include file="$(find imu_vn_100)/launch/vn_100_cont.launch" />
+    <!-- include file="$(find imu_vn_100)/launch/vn_100_cont.launch" / -->
     <rosparam file="$(find uav_control)/params/jetson.yaml" />
     <param name="uav_name" value="Jetson"/>
     <param name="motor_address" value="44,41,42,43" />

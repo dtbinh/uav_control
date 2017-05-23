@@ -24,5 +24,5 @@ v0 = [0.,0.,0.];   # initial velocity
 R0v = np.array(R0).flatten().T
 y0 = np.concatenate((R0v, W0,x0,v0))
 
-R = 
+R =
 uav_t.attitude_control(
