@@ -1,0 +1,24 @@
+name:
+    vicon: 'vicon/Maya/Maya'
+    ip: '192.168.10.27'
+port:
+    i2c: [41, 42 ,43, 44]
+controller:
+    m: 1.374 # 1.7 kg with sensors
+    J: [9.773e-3, 0.0, 0.0,
+        0.0, 9.773e-3, 0.0,
+        0.0, 0.0, 1.749e-2]
+    l: 0.305
+    c_tf: 0.1
+    gain:
+        att:
+            kp: 0.5
+            kd: 0.2
+            ki: 0.01
+        pos:
+            kp: 6.5
+            kd: 4.0
+            ki: 0.01
+    saturation:
+        x: 0.1
+        R: 0.01
