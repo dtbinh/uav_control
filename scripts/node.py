@@ -59,15 +59,20 @@ class uav(object):
         self.pub_states = rospy.Publisher('uav_states', states, queue_size=10)
         self.uav_states = states()
         #self.uav_states.xc = self.x_c
+        self.dt_vicon = 0
+        self.time_vicon = 0
         rospy.spin()
 
     def mocap_sub(self, msg):
         try:
+            self.dt_vicon = msg.header.stamp.to_sec() - self.time_vicon
+            self.time_vicon = msg.header.stamp.to_sec()
             (trans,rot) = self.tf_subscriber.lookupTransform('/world', self.uav_name, rospy.Time(0))
+            self.v = [(x_c - x_p)/self.dt_vicon for x_c, x_p in zip(trans, self.x)]
             self.x = trans
             self.uav_states.x_v = trans
+            self.uav_states.v_v = self.v
             self.uav_states.q_v = rot
-            print(tf.transformations.euler_from_quaternion(rot))
             self.R_v = self.tf.fromTranslationRotation(trans,rot)[:3,:3]
             self.uav_states.R_v = self.R_v.flatten().tolist()
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
@@ -91,6 +96,7 @@ class uav(object):
         self.uav_states.R_imu = self.R.flatten().tolist()
         self.orientation = tf.transformations.quaternion_from_euler(euler_angle[0],euler_angle[1],euler_angle[2])
         self.W = np.array([w.x,w.y,w.z])
+        self.uav_states.W = self.W
         #self.run_ukf()
         #self.control()
         br = tf.TransformBroadcaster()
@@ -103,17 +109,23 @@ class uav(object):
     def control(self):
         self.R = self.R_U2D.dot(np.array(self.uav_states.R_imu).reshape(3,3))
         self.x_ned = self.R_U2D.dot(self.x)
-        self.uav_states.x = self.x_ned
+        self.uav_states.x = self.x_ned.tolist()
         self.v = self.R_U2D.dot(self.v)
+        self.uav_states.v = self.v
         self.R = (self.R_U2D.dot(self.R_v)).dot(self.R_U2D)
         self.uav_states.R = self.R.flatten().tolist()
-        self.uav_states.xc = self.x_c[0]
-        self.uav_states.xc_ned = self.R_U2D.dot(self.uav_states.xc)
+        self.uav_states.xc = self.x_c[0].tolist()
+        self.uav_states.xc_ned = self.R_U2D.dot(self.uav_states.xc).tolist()
         self.F, self.M = self.controller.position_control( self.R, self.W, self.x_ned, self.v, self.x_c)
-        self.uav_states.b1d = self.controller.b1d
+        self.uav_states.b1d = self.controller.b1d.tolist()
         self.uav_states.force = self.F
         self.uav_states.moment = self.M.tolist()
-        self.uav_states.omega_c = np.array([self.controller.Wd,self.controller.Wd_dot]).flatten().tolist()
+        self.uav_states.Wc = self.controller.Wc.tolist()
+        self.uav_states.eW = self.controller.eW
+        self.uav_states.ev = self.controller.ev
+        self.uav_states.Wc_dot = self.controller.Wc_dot.tolist()
+        self.uav_states.Rc_dot = self.controller.Rc_dot.flatten().tolist()
+        self.uav_states.Rc_2dot = self.controller.Rc_2dot.flatten().tolist()
         #self.uav_states.gain_position = self.controller.kx
         command = np.concatenate(([self.F],self.M))
         command = np.dot(self.invA, command)
@@ -133,6 +145,11 @@ class uav(object):
         #self.uav_states.f_motor = command
         #self.uav_states.f_motor_sat = command_sat
         #self.uav_states.throttle = throttle
+        self.uav_states.gain_position = [self.controller.kx,self.controller.kv,0]
+        self.uav_states.gain_attitude = [self.controller.kR,self.controller.kW,0]
+        self.uav_states.Rc = self.controller.Rc.flatten().tolist()
+        self.uav_states.ex = np.array(self.controller.ex).flatten().tolist()
+        self.uav_states.eR = np.array(self.controller.eR).flatten().tolist()
 
     def motor_command(self, command):
         self.hw_interface.motor_command(command, True)
@@ -149,14 +166,9 @@ class uav(object):
         self.uav_states.header.frame_id = self.uav_name
         self.uav_states.q_imu = self.quaternion_to_array(self.imu_q).tolist()
         self.uav_states.w_imu = self.vector_to_array(self.imu_w).tolist()
-        self.uav_states.gain_position = [self.controller.kx,self.controller.kv,0]
-        self.uav_states.gain_attitude = [self.controller.kR,self.controller.kW,0]
 
         ## TODO add all the states updates
         ## add down-frame desired values
-        self.uav_states.Rc = self.controller.Rd.flatten().tolist()
-        self.uav_states.ex = np.array(self.controller.ex).flatten().tolist()
-        self.uav_states.eR = np.array(self.controller.eR).flatten().tolist()
         self.pub_states.publish(self.uav_states)
 
     def unscented_kalman_filter(self):

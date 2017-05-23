@@ -77,16 +77,15 @@ class Controller(object):
         A_dot = -self.kx*ev - self.kv*ex_2dot + self.m*xd_3dot
         A_2dot = -self.kx*ex_2dot - self.kv*ex_3dot + self.m*xd_4dot
 
-        (Rd, Wd, Wd_dot) = get_Rc(A, A_dot, A_2dot , b1d, b1d_dot, b1d_ddot)
-        self.Rd = Rd
-        self.Wd = Wd
-        self.Wd_dot = Wd_dot
-        (eR, eW) = attitude_errors( R, Rd, W, Wd )
+        (self.Rc, self.Rc_dot, self.Rc_2dot, Wc, Wc_dot) = get_Rc(A, A_dot, A_2dot , b1d, b1d_dot, b1d_ddot)
+        self.Wc = Wc
+        self.Wc_dot = Wc_dot
+        (eR, eW) = attitude_errors( R, self.Rc, W, self.Wc )
         self.eR = eR
         self.eW = eW
         M= (-self.kR*eR - self.kW*eW + np.cross(W, self.J.dot(W))
-            - self.J.dot(W_hat.dot(R.T.dot(Rd.dot(Wd)))
-            - R.T.dot(Rd.dot(Wd_dot))))
+            - self.J.dot(W_hat.dot(R.T.dot(Rd.dot(Wc)))
+            - R.T.dot(Rd.dot(Wc_dot))))
         return (f, M)
 
     def velocity_control(self, R, W, x, v, d_in):
@@ -113,8 +112,10 @@ class Controller(object):
         A_dot = - self.kv*ex_2dot + self.m*xd_3dot
         A_2dot = - self.kv*ex_3dot + self.m*xd_4dot
 
-        (Rd, Wd, Wd_dot) = get_Rc(A, A_dot, A_2dot , b1d, b1d_dot, b1d_ddot)
-        (eR, eW) = attitude_errors( R, Rd, W, Wd )
+        (self.Rc, self.Rc_dot, self.Rc_2dot, Wd, Wd_dot) = get_Rc(A, A_dot, A_2dot , b1d, b1d_dot, b1d_ddot)
+        self.Wc = Wd
+        self.Wc_dot = Wd_dot
+        (eR, eW) = attitude_errors( R, self.Rc, W, Wd )
         M= (-self.kR*eR - self.kW*eW
             + np.cross(W, self.J.dot(W))
             - self.J.dot(W_hat.dot(R.T.dot(Rd.dot(Wd)))
@@ -182,7 +183,7 @@ def get_Rc(A, A_dot, A_2dot, b1d, b1d_dot, b1d_ddot):
         + np.cross(b3c, b1c_2dot) ), b3c_2dot],(3,3)).T
     Wc = vee(Rc.T.dot(Rc_dot))
     Wc_dot= vee( Rc_dot.T.dot(Rc_dot) + Rc.T.dot(Rc_2dot))
-    return (Rc, Wc, Wc_dot)
+    return (Rc, Rc_dot, Rc_2dot, Wc, Wc_dot)
 
 def vee(M):
     return np.array([M[2,1], M[0,2], M[1,0]])

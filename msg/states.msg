@@ -27,14 +27,15 @@ float32[9] R_imu
 float32[9] Rc
 float32[9] Rc_dot
 float32[9] Rc_2dot
-float32[6] omega_c # + omaga_c_dot
+float32[3] Wc # + omaga_c_dot
+float32[3] Wc_dot
 float32[3] b1d # + b1d_dot, b1d_2dot
 
 # position attitude in NED
 float32[3] x # x,v
 float32[3] v
 float32[9] R
-float32[3] omega
+float32[3] W
 
 # position, attitude error vectors (NED)
 float32[3] ex # + ev
