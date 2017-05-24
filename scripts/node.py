@@ -53,7 +53,7 @@ class uav(object):
         if self.motor_address is not None:
             self.motor = pyMotor(self.motor_address)
             for k in range(200):
-                self.motor.motor_command([60,60,60,60],True)
+                self.motor.motor_command([60,60,60,60],False)
                 time.sleep(0.01)
         #self.ukf = ukf_uav.UnscentedKalmanFilter(12,6,1)
         #self.unscented_kalman_filter()
@@ -108,7 +108,7 @@ class uav(object):
         self.orientation = np.array([orient.x,orient.y,orient.z,orient.w])
         self.euler_angle = tf.transformations.euler_from_quaternion(self.orientation)
         euler_angle = (self.euler_angle[0], self.euler_angle[1], self.euler_angle[2]-0.7)
-        #self.R = self.tf.fromTranslationRotation((0,0,0), self.orientation)[:3,:3]
+        self.R_imu = self.tf.fromTranslationRotation((0,0,0), self.orientation)[:3,:3]
         self.uav_states.R_imu = self.R.flatten().tolist()
         self.orientation = tf.transformations.quaternion_from_euler(euler_angle[0],euler_angle[1],euler_angle[2])
         self.W = np.array([w.x,w.y,w.z])
@@ -116,10 +116,10 @@ class uav(object):
         #self.run_ukf()
         self.control()
         br = tf.TransformBroadcaster()
-        br.sendTransform((0,0,0), (1,0,0,0),
-                msg.header.stamp,
-                'imu',
-                'Jetson')
+        #br.sendTransform((0,0,0), (1,0,0,0),
+        #        msg.header.stamp,
+        #        'imu',
+        #        'Jetson')
         self.publish_states()
 
     def control(self):
@@ -153,7 +153,7 @@ class uav(object):
         self.uav_states.throttle = throttle.tolist()
         motor_on = True
         if self.motor_address is not None and motor_on:
-            self.motor.motor_command(throttle,True)
+            self.uav_states.motor_power = np.array(self.motor.motor_command(throttle,False)).flatten().tolist()
             pass
         # take only current voltage and rpm from the motor sensor rpm*780/14
         #self.uav_states.motor_power = []
