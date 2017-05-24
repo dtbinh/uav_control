@@ -3,19 +3,20 @@ import time
 import rospy
 from geometry_msgs.msg import Quaternion
 from uav_control.msg import trajectory
-import pygame
-pygame.init()
-pygame.display.set_caption('mission')
-size= [640,480]
-screen = pygame.display.set_mode(size)
-clock = pygame.time.Clock()
+#import pygame
+#pygame.init()
+#pygame.display.set_caption('mission')
+#size= [640,480]
+#screen = pygame.display.set_mode(size)
+#clock = pygame.time.Clock()
 
-pub = rospy.Publisher('xc', trajectory, queue_size= 10)
+pub = rospy.Publisher('xd', trajectory, queue_size= 10)
 def mission():
     dt = 0.01
     mode = int(input('Flight mode: '))
     t_init = time.time()
     cmd = trajectory()
+    cmd.b1 = [1,0,0]
     cmd.header.frame_id = 'uav'
     if mode == 0:
         print('Taking off at {} sec'.format(time.time()-t_init))
@@ -46,6 +47,8 @@ def mission():
                 print('w pressed')
                 break
         pass
+    else:
+        print('command not found: try again')
 
 if __name__ == '__main__':
     try:

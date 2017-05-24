@@ -70,7 +70,7 @@ class uav(object):
         rospy.spin()
 
     def v_update(self):
-        if len(self.v_array) < 10:
+        if len(self.v_array) < 7:
             self.v_array.append(self.v)
         else:
             self.v_array.pop(0)

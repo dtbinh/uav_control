@@ -23,7 +23,11 @@ cdef class pyMotor:
     def motor_test(self, int motor_id, throttle):
         self.thisptr.single_motor_test(motor_id, throttle)
     def motor_command(self, throttle, motor_on):
-        return self.thisptr.motor_command(throttle, motor_on)
+        cdef sensor_val = self.thisptr.motor_command(throttle, motor_on)
+        cdef sensor_out = []
+        for i in range(4):
+            sensor_out.append([sensor_val[i*6],sensor_val[i*6+3],sensor_val[i*6+5]])
+        return sensor_out
     def open_i2c(self):
         self.thisptr.open_i2c()
     def get_motor_address(self):
