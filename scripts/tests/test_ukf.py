@@ -1,6 +1,6 @@
 import sys
 # sys.path.append("ukf_uav")
-import ukf_uav
+from .. import ukf_uav
 import numpy as np
 import unittest
 

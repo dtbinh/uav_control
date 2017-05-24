@@ -157,11 +157,6 @@ class uav(object):
             pass
         # take only current voltage and rpm from the motor sensor rpm*780/14
         #self.uav_states.motor_power = []
-        #self.uav_states.force = self.F
-        #self.uav_states.moment = self.M
-        #self.uav_states.f_motor = command
-        #self.uav_states.f_motor_sat = command_sat
-        #self.uav_states.throttle = throttle
         self.uav_states.gain_position = [self.controller.kx,self.controller.kv,0]
         self.uav_states.gain_attitude = [self.controller.kR,self.controller.kW,0]
         self.uav_states.Rc = self.controller.Rc.flatten().tolist()

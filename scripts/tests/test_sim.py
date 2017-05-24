@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import unittest
-from sim_controller import *
+import numpy as np
+from .. import sim_controller
 
 class testMain(unittest.TestCase):
     """Tests for `main.py`."""
