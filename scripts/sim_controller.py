@@ -10,7 +10,7 @@ import mpl_toolkits.mplot3d.axes3d as p3
 import matplotlib.animation as animation
 import sys
 # import seaborn as sns
-from . import ukf_uav
+from .. import ukf_uav
 
 
 class UAV(object):
