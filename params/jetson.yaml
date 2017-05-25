@@ -1,23 +1,23 @@
 name:
+    uav: 'Jetson'
     vicon: 'vicon/Jetson/Jetson'
     ip: '192.168.10.27'
 port:
-    i2c: [44, 41, 42 ,43]
+    i2c: "44, 41, 42 ,43"
 controller:
+    dt: 0.01
     m: 1.454
-    J: [9.773e-3, 0.0, 0.0,
-        0.0, 9.773e-3, 0.0,
-        0.0, 0.0, 1.749e-2]
+    J: '9.773e-3,9.773e-3,1.749e-2'
     l: 0.22
-    c_tf: 0.12
+    c_tf: 0.1
     gain:
         att:
             kp: 0.8
             kd: 0.5
             ki: 0.01
         pos:
-            kp: 1.5
-            kd: 1.0
+            kp: 6.5
+            kd: 4.0
             ki: 0.01
     saturation:
         x: 0.1

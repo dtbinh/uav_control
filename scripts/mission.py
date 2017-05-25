@@ -10,7 +10,7 @@ from uav_control.msg import trajectory
 #screen = pygame.display.set_mode(size)
 #clock = pygame.time.Clock()
 
-pub = rospy.Publisher('xd', trajectory, queue_size= 10)
+pub = rospy.Publisher('xc', trajectory, queue_size= 10)
 def mission():
     dt = 0.01
     mode = int(input('Flight mode: '))
@@ -28,9 +28,6 @@ def mission():
                 time.sleep(dt)
                 cmd.header.stamp = rospy.get_rostime()
                 pub.publish(cmd)
-                print(t_cur)
-                if input() == 1:
-                    break
         except KeyboardInterrupt:
             print('mission terminated')
     elif mode == 1:
