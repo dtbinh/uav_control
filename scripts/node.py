@@ -2,7 +2,7 @@
 from __future__ import print_function, division, with_statement
 import rospy
 import tf
-from dynamic_reconfigure.client
+import dynamic_reconfigure.client
 import numpy as np
 from geometry_msgs.msg import PoseStamped
 from sensor_msgs.msg import Imu
@@ -17,15 +17,15 @@ from i2c_cython.hw_interface import pyMotor
 from numpy.linalg import inv
 from uav_control.msg import states
 from uav_control.msg import trajectory
-
+from dynamic_reconfigure.server import Server
+from uav_control.cfg import gainsConfig
+import thread
 
 class uav(object):
 
     def __init__(self, motor_address = None):
         self.simulation = rospy.get_param('simulation')
         self.uav_name = rospy.get_param('name/uav')
-        rospy.wait_for_service('gain_config')
-        self.client = dynamic_reconfigure.client.Client('gain_config', timeout=0, config_callback=self.config_callback)
         self.motor_address = np.fromstring(rospy.get_param('/'+self.uav_name+'/port/i2c'), dtype=int,sep=',')
         self._dt = rospy.get_param('controller/dt')
         # initialization of ROS node
@@ -85,18 +85,26 @@ class uav(object):
         self.trajectory_sub = rospy.Subscriber('/xc', trajectory, self.trajectory_sub)
         self.v_ave = np.array([0,0,0])
         self.v_array = []
+        #rospy.wait_for_service('/gain_tuning')
+        #self.client = dynamic_reconfigure.client.Client('/gain_config', timeout=30, config_callback=self.config_callback)
+        srv = Server(gainsConfig, self.config_callback)
         rospy.spin()
 
-    def config_callback(self,config):
+    def config_callback(self, config, level):
         rospy.loginfo('config update')
+        self.controller.kR = config['kR']
+        self.controller.kx = config['kx']
+        self.controller.kv = config['kv']
+        self.controller.kW = config['kW']
+        return config
 
     def v_update(self):
-        if len(self.v_array) < 7:
+        if len(self.v_array) < 18:
             self.v_array.append(self.v)
         else:
             self.v_array.pop(0)
             self.v_array.append(self.v)
-            self.v_ave = np.mean(self.v_array, axis = 0)
+        self.v_ave = np.mean(self.v_array, axis = 0)
 
     def trajectory_sub(self, msg):
         self.b1d = msg.b1
@@ -119,7 +127,6 @@ class uav(object):
             self.uav_states.R_v = self.R_v.flatten().tolist()
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
             print('No transform between vicon and UAV found')
-        #self.control()
 
     def camera_sub(self):
         pass
@@ -155,6 +162,7 @@ class uav(object):
         self.v_ave_ned = self.R_U2D.dot(self.v_ave)
         self.uav_states.v = self.v_ave_ned.tolist()
         self.R = self.R_U2D.dot(self.R_v.dot(self.R_U2D))
+        #self.R = self.R_imu
         self.uav_states.R = self.R.flatten().tolist()
         self.uav_states.xc = self.xc.tolist()
         self.uav_states.xc_ned = self.R_U2D.dot(self.xc).tolist()
@@ -162,7 +170,7 @@ class uav(object):
         self.x_c_all = (self.xc, self.xc_dot, self.xc_2dot, self.xc_3dot,self.xc_4dot,
                 self.R_U2D.dot(self.b1d), self.b1d_dot, self.b1d_2dot,
                 self.Rc, self.Wc, self.Wc_dot)
-        self.F, self.M = self.controller.attitude_control( self.R, self.W, self.x_ned, self.v_ave_ned, self.x_c_all)
+        self.F, self.M = self.controller.position_control( self.R, self.W, self.x_ned, self.v_ave_ned, self.x_c_all)
 
         command = np.concatenate(([self.F],self.M))
         command = np.dot(self.invA, command)

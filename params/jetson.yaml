@@ -3,6 +3,7 @@ name:
     vicon: 'vicon/Jetson/Jetson'
     ip: '192.168.10.27'
 port:
+    imu: '/dev/ttyTHS2'
     idx: 1
     i2c: "44, 41, 42 ,43"
 controller:

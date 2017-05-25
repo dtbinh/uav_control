@@ -2,7 +2,7 @@
     <group ns='Maya'>
     <include file="$(find uav_control)/launch/vn_100_cont_odroid.launch" />
     <rosparam file="$(find uav_control)/params/odroid.yaml" />
-    <param name="simulation" value="False" />
+    <param name="simulation" value="True" />
     <node name="Maya" pkg="uav_control" type="node.py" respawn="false" output="screen">
     </node>
     </group>
