@@ -2,6 +2,7 @@
 from __future__ import print_function, division, with_statement
 import rospy
 import tf
+from dynamic_reconfigure.client
 import numpy as np
 from geometry_msgs.msg import PoseStamped
 from sensor_msgs.msg import Imu
@@ -17,11 +18,14 @@ from numpy.linalg import inv
 from uav_control.msg import states
 from uav_control.msg import trajectory
 
+
 class uav(object):
 
     def __init__(self, motor_address = None):
-        self.simulation = False
+        self.simulation = rospy.get_param('simulation')
         self.uav_name = rospy.get_param('name/uav')
+        rospy.wait_for_service('gain_config')
+        self.client = dynamic_reconfigure.client.Client('gain_config', timeout=0, config_callback=self.config_callback)
         self.motor_address = np.fromstring(rospy.get_param('/'+self.uav_name+'/port/i2c'), dtype=int,sep=',')
         self._dt = rospy.get_param('controller/dt')
         # initialization of ROS node
@@ -63,7 +67,7 @@ class uav(object):
         self.A = np.array([[1.,1.,1.,1.],[0,-l,0,l],[l,0,-l,0],[c_tf,-c_tf,c_tf,-c_tf]])
         self.invA = inv(self.A)
         self.R_U2D = np.array([[1.,0,0],[0,-1,0],[0,0,-1]])
-        if self.motor_address is not None:
+        if self.motor_address is not None and not self.simulation:
             self.motor = pyMotor(self.motor_address)
             for k in range(200):
                 self.motor.motor_command([60,60,60,60],True)
@@ -82,6 +86,9 @@ class uav(object):
         self.v_ave = np.array([0,0,0])
         self.v_array = []
         rospy.spin()
+
+    def config_callback(self,config):
+        rospy.loginfo('config update')
 
     def v_update(self):
         if len(self.v_array) < 7:
@@ -106,13 +113,14 @@ class uav(object):
             self.v_update()
             self.x = trans
             self.uav_states.x_v = trans
-            self.uav_states.v_v = self.v_ave
+            self.uav_states.v_v = self.v_ave.tolist()
             self.uav_states.q_v = rot
             self.R_v = self.tf.fromTranslationRotation(trans,rot)[:3,:3]
             self.uav_states.R_v = self.R_v.flatten().tolist()
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
             print('No transform between vicon and UAV found')
         #self.control()
+
     def camera_sub(self):
         pass
 
@@ -131,7 +139,7 @@ class uav(object):
         self.uav_states.R_imu = self.R_imu.flatten().tolist()
         self.orientation = tf.transformations.quaternion_from_euler(euler_angle[0],euler_angle[1],euler_angle[2])
         self.W = np.array([w.x,w.y,w.z])
-        self.uav_states.W = self.W
+        self.uav_states.W = self.W.tolist()
         #self.run_ukf()
         self.control()
         br = tf.TransformBroadcaster()
@@ -145,16 +153,16 @@ class uav(object):
         self.x_ned = self.R_U2D.dot(self.x)
         self.uav_states.x = self.x_ned.tolist()
         self.v_ave_ned = self.R_U2D.dot(self.v_ave)
-        self.uav_states.v = self.v_ave_ned
+        self.uav_states.v = self.v_ave_ned.tolist()
         self.R = self.R_U2D.dot(self.R_v.dot(self.R_U2D))
         self.uav_states.R = self.R.flatten().tolist()
-        self.uav_states.xc = self.xc
+        self.uav_states.xc = self.xc.tolist()
         self.uav_states.xc_ned = self.R_U2D.dot(self.xc).tolist()
 
         self.x_c_all = (self.xc, self.xc_dot, self.xc_2dot, self.xc_3dot,self.xc_4dot,
                 self.R_U2D.dot(self.b1d), self.b1d_dot, self.b1d_2dot,
                 self.Rc, self.Wc, self.Wc_dot)
-        self.F, self.M = self.controller.position_control( self.R, self.W, self.x_ned, self.v_ave_ned, self.x_c_all)
+        self.F, self.M = self.controller.attitude_control( self.R, self.W, self.x_ned, self.v_ave_ned, self.x_c_all)
 
         command = np.concatenate(([self.F],self.M))
         command = np.dot(self.invA, command)
@@ -165,7 +173,7 @@ class uav(object):
         throttle = np.rint(1./0.03*(command+0.37))
         self.uav_states.throttle = throttle.tolist()
         motor_on = True
-        if self.motor_address is not None:
+        if self.motor_address is not None and not self.simulation:
             self.uav_states.motor_power = np.array(self.motor.motor_command(throttle,True)).flatten().tolist()
             pass
 
@@ -174,11 +182,11 @@ class uav(object):
         self.uav_states.force = self.F
         self.uav_states.moment = self.M.tolist()
         self.uav_states.Wc = self.controller.Wc.tolist()
-        self.uav_states.eW = self.controller.eW
-        self.uav_states.ev = self.controller.ev
+        self.uav_states.eW = self.controller.eW.tolist()
+        self.uav_states.ev = self.controller.ev.tolist()
         self.uav_states.Wc_dot = self.controller.Wc_dot.tolist()
-        self.uav_states.Rc_dot = self.controller.Rc_dot.flatten().tolist()
-        self.uav_states.Rc_2dot = self.controller.Rc_2dot.flatten().tolist()
+        #self.uav_states.Rc_dot = self.controller.Rc_dot.flatten().tolist()
+        #self.uav_states.Rc_2dot = self.controller.Rc_2dot.flatten().tolist()
         self.uav_states.gain_position = [self.controller.kx,self.controller.kv,0]
         self.uav_states.gain_attitude = [self.controller.kR,self.controller.kW,0]
         self.uav_states.Rc = self.controller.Rc.flatten().tolist()

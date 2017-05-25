@@ -26,7 +26,8 @@ cdef class pyMotor:
         cdef sensor_val = self.thisptr.motor_command(throttle, motor_on)
         cdef sensor_out = []
         for i in range(4):
-            sensor_out.append([sensor_val[i*6],sensor_val[i*6+3],sensor_val[i*6+5]])
+            #sensor_out.append([sensor_val[i*6]*0.1,sensor_val[i*6+5]*0.1,sensor_val[i*6+3]*780/14])
+            sensor_out.append([sensor_val[i*6],sensor_val[i*6+5],sensor_val[i*6+3]])
         return sensor_out
     def open_i2c(self):
         self.thisptr.open_i2c()

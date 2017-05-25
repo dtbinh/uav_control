@@ -93,7 +93,7 @@ class Controller(object):
         (xd, xd_dot, xd_2dot, xd_3dot, xd_4dot,
                 b1d, b1d_dot, b1d_ddot, Rd, Wd, Wd_dot) = d_in
         (ex, ev) = position_errors( x, xd, v, xd_dot)
-
+        self.b1d = b1d
         f = (self.kx*ev + self.m*self.g*self.e3
                 - self.m*xd_2dot).dot(R.dot(self.e3))
         W_hat = hat(W)
@@ -116,6 +116,8 @@ class Controller(object):
         self.Wc = Wd
         self.Wc_dot = Wd_dot
         (eR, eW) = attitude_errors( R, self.Rc, W, Wd )
+        self.eR = eR
+        self.eW = eW
         M= (-self.kR*eR - self.kW*eW
             + np.cross(W, self.J.dot(W))
             - self.J.dot(W_hat.dot(R.T.dot(Rd.dot(Wd)))
@@ -134,10 +136,18 @@ class Controller(object):
         """
         (xd, xd_dot, xd_ddot, xd_dddot, xd_ddddot,
                 b1d, b1d_dot, b1d_ddot, Rd, Wd, Wd_dot) = d_in
+        self.b1d = b1d
+        self.Wc = Wd
+        self.Rc = Rd
+        self.Wc_dot = Wd_dot
         (ex, ev) = position_errors( x, xd, v, xd_dot)
+        self.ex = ex
+        self.ev = ev
         f = (self.kx*ex + self.kv*v + self.m*self.g*self.e3).dot(R.dot(self.e3))
         W_hat = hat(W)
         (eR, eW) = attitude_errors( R, Rd, W, Wd )
+        self.eR = eR
+        self.eW = eW
         M= (-self.kR*eR - self.kW*eW + np.cross(W, self.J.dot(W))
             - self.J.dot(W_hat.dot(R.T.dot(Rd.dot(Wd)))
             - R.T.dot(Rd.dot(Wd_dot))))

@@ -3,6 +3,7 @@ name:
     vicon: 'vicon/Jetson/Jetson'
     ip: '192.168.10.27'
 port:
+    idx: 1
     i2c: "44, 41, 42 ,43"
 controller:
     dt: 0.01
@@ -12,13 +13,13 @@ controller:
     c_tf: 0.1
     gain:
         att:
-            kp: 0.8
-            kd: 0.5
-            ki: 0.01
+            kp: 0.3
+            kd: 0.1
+            ki: 0.0
         pos:
             kp: 6.5
             kd: 4.0
-            ki: 0.01
+            ki: 0.0
     saturation:
         x: 0.1
         R: 0.01

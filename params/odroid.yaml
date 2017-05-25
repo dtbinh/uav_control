@@ -1,13 +1,13 @@
 name:
+    uav: 'Maya'
     vicon: 'vicon/Maya/Maya'
     ip: '192.168.10.27'
 port:
-    i2c: [41, 42 ,43, 44]
+    idx: 1
+    i2c: '41,42,43,44'
 controller:
     m: 1.374 # 1.7 kg with sensors
-    J: [9.773e-3, 0.0, 0.0,
-        0.0, 9.773e-3, 0.0,
-        0.0, 0.0, 1.749e-2]
+    J: '9.773e-3,9.773e-3,1.749e-2'
     l: 0.305
     c_tf: 0.1
     gain:
