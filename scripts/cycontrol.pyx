@@ -4,6 +4,7 @@ cimport numpy as np
 
 cdef extern from 'src/controller.hpp':
     cdef cppclass controller:
+        controller()
         void GeometricPositionController(double *xd)
 
 cdef class c_control:
