@@ -80,10 +80,11 @@ class uav(object):
         self.tf_subscriber = tf.TransformListener()
         self.uav_w = rospy.Subscriber('imu/imu',Imu, self.imu_sub)
         self.dt_vicon = 0.01
+        self.v_ave = np.array([0,0,0])
+        self.v_ave_ned = self.R_U2D.dot(self.v_ave)
         self.time_vicon = rospy.get_rostime().to_sec()
         self.uav_pose = rospy.Subscriber('/vicon/'+self.uav_name+'/pose',PoseStamped, self.mocap_sub)
         self.trajectory_sub = rospy.Subscriber('/xc', trajectory, self.trajectory_sub)
-        self.v_ave = np.array([0,0,0])
         self.v_array = []
         #rospy.wait_for_service('/gain_tuning')
         #self.client = dynamic_reconfigure.client.Client('/gain_config', timeout=30, config_callback=self.config_callback)
@@ -99,12 +100,12 @@ class uav(object):
         return config
 
     def v_update(self):
-        if len(self.v_array) < 18:
+        if len(self.v_array) < 10:
             self.v_array.append(self.v)
         else:
             self.v_array.pop(0)
             self.v_array.append(self.v)
-        self.v_ave = np.mean(self.v_array, axis = 0)
+            self.v_ave = np.mean(self.v_array, axis = 0)
 
     def trajectory_sub(self, msg):
         self.b1d = msg.b1
@@ -116,14 +117,23 @@ class uav(object):
         try:
             self.dt_vicon = msg.header.stamp.to_sec() - self.time_vicon
             self.time_vicon = msg.header.stamp.to_sec()
-            (trans,rot) = self.tf_subscriber.lookupTransform('/world', self.uav_name, rospy.Time(0))
+            x_v = msg.pose.position
+            trans = np.array([x_v.x,x_v.y,x_v.z])
+
+            self.v_q = msg.pose.orientation
+            orient = msg.pose.orientation
+            self.orientation_v = np.array([orient.x,orient.y,orient.z,orient.w])
+            self.euler_angle = tf.transformations.euler_from_quaternion(self.orientation_v)
+            euler_angle = (self.euler_angle[0], self.euler_angle[1], self.euler_angle[2])
+            self.R_v = self.tf.fromTranslationRotation((0,0,0), self.orientation_v)[:3,:3]
+            #(trans,rot) = self.tf_subscriber.lookupTransform('/world', self.uav_name, rospy.Time(0))
             self.v = [(x_c - x_p)/self.dt_vicon for x_c, x_p in zip(trans, self.x)]
             self.v_update()
             self.x = trans
             self.uav_states.x_v = trans
             self.uav_states.v_v = self.v_ave.tolist()
-            self.uav_states.q_v = rot
-            self.R_v = self.tf.fromTranslationRotation(trans,rot)[:3,:3]
+            self.uav_states.q_v = self.orientation_v
+            #self.R_v = self.tf.fromTranslationRotation(trans,rot)[:3,:3]
             self.uav_states.R_v = self.R_v.flatten().tolist()
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
             print('No transform between vicon and UAV found')

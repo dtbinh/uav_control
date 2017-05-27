@@ -2,14 +2,14 @@ from distutils.core import setup
 from distutils.extension import Extension
 from Cython.Distutils import build_ext
 
-sourcefiles = ['hw_interface.pyx','test.pyx']
-ext_modules = [Extension("hw_interface",
+sourcefiles = ['c_ctrl.pyx']
+ext_modules = [Extension("c_ctrl",
                           sourcefiles,
                           language="c++"
                           )]
 
 setup(
-  name = 'i2c hw_interface',
+  name = 'test',
   cmdclass = {'build_ext': build_ext},
   ext_modules = ext_modules
 )

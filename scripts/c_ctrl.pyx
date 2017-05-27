@@ -4,6 +4,14 @@ import numpy.linalg as la
 import pdb
 import sys
 # import numba # use just in time compiling for speed up
+cimport numpy as np
+cimport cython
+
+DTYPE = np.float
+ctypedef np.float DTYPE_t
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
 
 class Controller(object):
     """UAV controller
@@ -28,7 +36,7 @@ class Controller(object):
         .. _github source code:
             https://github.com/fdcl-gwu/UAV_control.git
     """
-    def __init__(self, J, e3):
+    def __init__(self,np.ndarray J,np.ndarray e3):
         """Initialization of UAV with known pythical properties"""
         self.m = 1.71
         self.g = 9.81
@@ -42,7 +50,7 @@ class Controller(object):
         self.eR = None
         print('UAV: initialized')
 
-    def position_control(self, R, W, x, v, d_in):
+    def position_control(self,np.ndarray R, np.ndarray W, np.ndarray x,np.ndarray v, d_in):
         """Geometric Position Controller
 
         This ...
@@ -57,7 +65,7 @@ class Controller(object):
         self.ex = ex
         self.ev = ev
 
-        f = np.dot(self.kx*ex + self.kv*ev + self.m*self.g*self.e3
+        cdef float f = np.dot(self.kx*ex + self.kv*ev + self.m*self.g*self.e3
                 - self.m*xd_2dot, R.dot(self.e3) )
         W_hat = hat(W)
         R_dot = R.dot(W_hat)
@@ -202,9 +210,9 @@ def attitude_errors( R, Rd, W, Wd ):
     eW = W - R.T.dot(Rd.dot(Wd))
     return (eR, eW)
 
-def position_errors(x, xd, v, vd):
-    ex = x - xd
-    ev = v - vd
+cdef position_errors(np.ndarray[np.float64_t, ndim=1] x, np.ndarray[np.float64_t, ndim=1] xd, np.ndarray[np.float64_t, ndim=1] v, np.ndarray[np.float64_t, ndim=1] vd):
+    cdef np.ndarray[np.float64_t, cast=True] ex = x - xd
+    cdef np.ndarray[np.float64_t, cast=True] ev = v - vd
     return (ex, ev)
 
 def rot_eul(x_in):

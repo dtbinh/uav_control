@@ -7,10 +7,11 @@ import pdb
 import time
 J = np.eye(3)
 e3 = np.array([0,0,1])
-
+from .. import c_ctrl
 
 test_ctrl = controller.Controller(J, e3)
-force = 0
+c_test_ctrl = c_ctrl.Controller(J, e3)
+force = 1
 def test_e3():
     assert (test_ctrl.e3 == e3).all()
 
@@ -33,6 +34,15 @@ def test_pos_controller(benchmark):
     Rc = np.eye(3)
     Wc = Wc_dot = np.zeros(3)
     force, M = benchmark(test_ctrl.position_control,Rc,Wc,xc,xcdot,(xc,xcdot,xc2dot,xc3dot,xc4dot,b1d,b1d_dot,b1d_2dot,Rc,Wc,Wc_dot))
+
+def test_pos_c_ctrl(benchmark):
+    xc = xcdot = xc2dot = xc3dot = xc4dot = np.zeros(3)
+    b1d = [1,0,0]
+    b1d_dot = b1d_2dot = np.zeros(3)
+    Rc = np.eye(3)
+    Wc = Wc_dot = np.zeros(3)
+    force, M = benchmark(c_test_ctrl.position_control, Rc,Wc,xc,xcdot,(xc,xcdot,xc2dot,xc3dot,xc4dot,b1d,b1d_dot,b1d_2dot,Rc,Wc,Wc_dot))
+
     assert force >= 0
     np.testing.assert_almost_equal(np.mean(M),0)
 
