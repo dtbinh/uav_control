@@ -20,6 +20,7 @@ from uav_control.msg import trajectory
 from dynamic_reconfigure.server import Server
 from uav_control.cfg import gainsConfig
 import thread
+import cython_control
 
 class uav(object):
 
@@ -60,6 +61,7 @@ class uav(object):
         self.controller.kR, self.controller.kW = rospy.get_param('controller/gain/att/kp'), rospy.get_param('controller/gain/att/kd')
         #self.controller.kR = rospy.get_param('controller/kR')
         #self.controller.kx = rospy.get_param('controller/kx')
+        self.c_controler = cython_control.c_control(self.m,self._dt,self.J.flatten(),np.ones(6))
         self.F = None
         self.M = None
         l = rospy.get_param('controller/l')

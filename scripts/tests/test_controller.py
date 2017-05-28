@@ -8,9 +8,10 @@ import time
 J = np.eye(3)
 e3 = np.array([0,0,1])
 from .. import cython_control
-
+m = 1.7
+dt =  0.01
 test_ctrl = controller.Controller(J, e3)
-c_test_ctrl = cython_control.c_control(1.1 ,J.flatten(), np.array([1,1,1,1,1,1,1],np.double))
+c_test_ctrl = cython_control.c_control(m,dt,J.flatten(), np.array([1,1,1,1,1,1,1],np.double))
 force = 1
 def test_e3():
     assert (test_ctrl.e3 == e3).all()
@@ -44,6 +45,6 @@ def test_pos_c_ctrl(benchmark):
     command = np.zeros(4)
     Wc = Wc_dot = np.zeros(3)
     xc_all = np.array([xc,xcdot,xc2dot,xc3dot,xc4dot,b1d,b1d_dot,b1d_2dot])
-    benchmark(c_test_ctrl.position_control, xc,xc,Rc.flatten(), xc, xc,Rc_2dot,command)
+    benchmark(c_test_ctrl.position_control, xc,xc,Rc.flatten(), xc, xc,command)
 
 

@@ -1,6 +1,7 @@
 clean:
 	rm -f -r build/
 	rm -f *.so
+	rm -f *.cpp
 
 clean-cpp:
 	rm -f hw_interface.cpp
