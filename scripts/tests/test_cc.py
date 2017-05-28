@@ -26,9 +26,11 @@ def test_init(benchmark):
     print(moment)
     assert (a == b).all
 
-def test_kx():
-    print(controller.get_kx())
-
+def test_get_b1d():
+    controller.get_b1d(vec3)
+    print()
+    print(vec3)
+    assert (vec3 == np.array([1,0,0])).all()
 def test_get_e3():
     controller.get_e3(vec3)
     print()

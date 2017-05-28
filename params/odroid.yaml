@@ -8,7 +8,7 @@ port:
     i2c: '41,42,43,44'
 controller:
     dt: 0.01
-    m: 1.723 # 1.7 kg with sensors
+    m: 1.45 # 1.7 kg with sensors
     J: '9.773e-3,9.773e-3,1.749e-2'
     l: 0.305
     c_tf: 0.1

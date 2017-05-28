@@ -1,5 +1,6 @@
 scripts/*.cpp
 scripts/i2c_cython/*.cpp
+
 # Created by https://www.gitignore.io/api/python,linux,osx
 
 ### Linux ###

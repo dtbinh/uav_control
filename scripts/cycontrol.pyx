@@ -18,6 +18,7 @@ cdef extern from 'src/controller.hpp':
         void get_Wc(double* R)
         void get_Wc_dot(double* R)
         void get_eiR(double* R)
+        void get_b1d(double* R)
 
 cdef class c_control:
 
@@ -29,8 +30,36 @@ cdef class c_control:
     def position_control(self, np.ndarray[double, ndim=1] x_in, np.ndarray[double, ndim=1] v_in, np.ndarray[double, ndim=1] R_in, np.ndarray[double, ndim=1] W, np.ndarray[double, ndim=1] xc, np.ndarray[double, ndim=1] M_out):
         self.c_control.GeometricPositionController(<double*> x_in.data, <double*> v_in.data,<double*> R_in.data, <double*> W.data, <double*> xc.data, <double*> M_out.data)
 
-    def get_kx(self):
+    @property
+    def kx(self):
         return self.c_control.kx
+    @kx.setter
+    def kx(self, val):
+        self.c_control.kx = val
+
+    @property
+    def kv(self):
+        return self.c_control.kv
+    @kv.setter
+    def kv(self, val):
+        self.c_control.kv = val
+
+    @property
+    def kR(self):
+        return self.c_control.kR
+    @kR.setter
+    def kR(self, val):
+        self.c_control.kR = val
+
+    @property
+    def kW(self):
+        return self.c_control.kW
+    @kW.setter
+    def kW(self, val):
+        self.c_control.kW = val
+
+    def get_b1d(self, np.ndarray[double,ndim =1] R):
+        self.c_control.get_b1d(<double*> R.data)
 
     def get_Rc(self, np.ndarray[double,ndim =1] R):
         self.c_control.get_Rc(<double*> R.data)

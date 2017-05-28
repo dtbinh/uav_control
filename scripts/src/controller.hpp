@@ -38,6 +38,10 @@ public:
   Map<Matrix<double,3,3, RowMajor>>(R,3,3) = Rc_2dot;
   };
 
+  void get_b1d(double* R){
+  Map<Vector3d>(R,3) = b1d;
+  };
+
   void get_eiR(double* R){
   Map<Vector3d>(R,3) = eiR;
   };
