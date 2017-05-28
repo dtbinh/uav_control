@@ -133,9 +133,9 @@ class uav(object):
             self.v = [(x_c - x_p)/self.dt_vicon for x_c, x_p in zip(trans, self.x)]
             self.v_update()
             self.x = trans
-            self.uav_states.x_v = trans
+            self.uav_states.x_v = trans.tolist()
             self.uav_states.v_v = self.v_ave.tolist()
-            self.uav_states.q_v = self.orientation_v
+            self.uav_states.q_v = self.orientation_v.tolist()
             #self.R_v = self.tf.fromTranslationRotation(trans,rot)[:3,:3]
             self.uav_states.R_v = self.R_v.flatten().tolist()
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
@@ -183,12 +183,13 @@ class uav(object):
         self.x_c_all = (self.xc, self.xc_dot, self.xc_2dot, self.xc_3dot,self.xc_4dot,
                 self.R_U2D.dot(self.b1d), self.b1d_dot, self.b1d_2dot,
                 self.Rc, self.Wc, self.Wc_dot)
-        self.F, self.M = self.controller.position_control( self.R, self.W, self.x_ned, self.v_ave_ned, self.x_c_all)
-	c_throttle = np.zeros(4)
-	self.c_controller.position_control(self.x_ned, self.v_ave_ned,self.R,self.W, np.array(self.x_c_all).flatten(),c_throttle)
+        #self.F, self.M = self.controller.position_control( self.R, self.W, self.x_ned, self.v_ave_ned, self.x_c_all)
+	c_command = np.zeros(4)
+        self.xc_all = np.array([self.xc,self.xc_dot,self.xc_2dot,self.xc_3dot,self.xc_4dot,self.b1d,self.b1d_dot,self.b1d_2dot],np.double).flatten()
+	self.c_controller.position_control(self.x_ned, self.v_ave_ned,self.R.flatten(),self.W, np.array(self.xc_all).flatten(),c_command)
 
-        command = np.concatenate(([self.F],self.M))
-        command = np.dot(self.invA, command)
+        #command = np.concatenate(([self.F],self.M))
+        command = np.dot(self.invA, c_command)
         self.uav_states.f_motor = command.tolist()
         command = [val if val > 0 else 0 for val in command]
         command = np.array([val if val < 6 else 6 for val in command])
@@ -201,20 +202,30 @@ class uav(object):
             pass
 
         # take only current voltage and rpm from the motor sensor rpm*780/14
-        self.uav_states.b1d = self.controller.b1d.tolist()
-        self.uav_states.force = self.F
-        self.uav_states.moment = self.M.tolist()
-        self.uav_states.Wc = self.controller.Wc.tolist()
-        self.uav_states.eW = self.controller.eW.tolist()
-        self.uav_states.ev = self.controller.ev.tolist()
-        self.uav_states.Wc_dot = self.controller.Wc_dot.tolist()
+        #self.uav_states.b1d = self.c_controller.get_b1d()
+        self.uav_states.force = c_command[0]
+        self.uav_states.moment = c_command[1:].tolist()
+        _ = np.zeros(3)
+        self.c_controller.get_Wc(_)
+        self.uav_states.Wc = _
+        self.c_controller.get_eW(_)
+        self.uav_states.eW = _
+        self.c_controller.get_ev(_)
+        self.uav_states.ev = _
+        self.c_controller.get_Wc_dot(_)
+        self.uav_states.Wc_dot = _
         #self.uav_states.Rc_dot = self.controller.Rc_dot.flatten().tolist()
         #self.uav_states.Rc_2dot = self.controller.Rc_2dot.flatten().tolist()
         self.uav_states.gain_position = [self.controller.kx,self.controller.kv,0]
         self.uav_states.gain_attitude = [self.controller.kR,self.controller.kW,0]
-        self.uav_states.Rc = self.controller.Rc.flatten().tolist()
-        self.uav_states.ex = np.array(self.controller.ex).flatten().tolist()
-        self.uav_states.eR = np.array(self.controller.eR).flatten().tolist()
+        _ = np.zeros(9)
+        self.c_controller.get_Rc(_)
+        self.uav_states.Rc = _
+        _ = np.zeros(3)
+        self.c_controller.get_ex(_)
+        self.uav_states.ex = _
+        self.c_controller.get_eR(_)
+        self.uav_states.eR = _
 
     def motor_command(self, command):
         self.hw_interface.motor_command(command, True)
@@ -231,7 +242,7 @@ class uav(object):
         self.uav_states.header.frame_id = self.uav_name
         self.uav_states.q_imu = self.quaternion_to_array(self.imu_q).tolist()
         self.uav_states.w_imu = self.vector_to_array(self.imu_w).tolist()
-
+        #print(self.uav_states)
         ## TODO add all the states updates
         ## add down-frame desired values
         self.pub_states.publish(self.uav_states)
