@@ -7,7 +7,21 @@ using namespace Eigen;
 class controller
 {
 public:
-  //static void GeometricPositionController( Vector3d xd, Vector3d xd_dot, Vector3d xd_ddot,Vector3d Wd, Vector3d Wddot, Vector3d x_v, Vector3d v_v, Vector3d W_in, Matrix3d R_v, Matrix3d J);
-  void GeometricPositionController(double* xc);
+  double kx = 0.1;
+  double kv = 0.1;
+  double kiX = 0.1;
+  double kR = 1;
+  double kW = 1;
+  double kiR = 0.1;
+
+  double cR;
+  double m = 1.4;
+  double g = 9.81;
+
+  double del_t = 0.01;
+  Matrix3d J;
+
+  controller(double m_in, double *J_in, double* gains);
+  void GeometricPositionController(double* x_in, double* v_in, double* R_in, double* W_in, double* xc_in, double* Rc_2dot, double* M_out);
 };
 #endif
