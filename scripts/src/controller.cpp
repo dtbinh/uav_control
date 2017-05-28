@@ -12,7 +12,7 @@ controller::controller(double m_in, double *J_in, double* gains){
     kW = gains[4];
 }
 
-void controller::GeometricPositionController(double* x_in, double* v_in, double* R_in, double* W_in, double* xc_in, double* Rc_2dot,double* M_out){
+void controller::GeometricPositionController(double* x_in, double* v_in, double* R_in, double* W_in, double* xc_in,double* M_out){
   std::cout.precision(5);
   Vector3d eiR_last, eR;
   Vector3d x = Map<Vector3d>(x_in);
@@ -73,24 +73,22 @@ void controller::GeometricPositionController(double* x_in, double* v_in, double*
   Vector3d Rd1dot = hat_eigen(Rd2dot)*Ld+hat_eigen(Rd2)*Lddot;
   Vector3d Rd1ddot = hat_eigen(Rd2ddot)*Ld+2*hat_eigen(Rd2dot)*Lddot+hat_eigen(Rd2)*Ldddot;
 
-  Matrix3d Rd, Rddot, Rdddot;
-  Rd << Rd1, Rd2, Ld;
-  Rddot << Rd1dot, Rd2dot, Lddot;
-  Rdddot << Rd1ddot, Rd2ddot, Ldddot;
-  Map<Matrix<double,3,3, RowMajor>>(Rc_2dot,3,3) = Rdddot;
+  Rc << Rd1, Rd2, Ld;
+  Rc_dot << Rd1dot, Rd2dot, Lddot;
+  Rc_2dot << Rd1ddot, Rd2ddot, Ldddot;
   // Vector3d Wc, Wc_dot;
-  vee_eigen(Rddot, Wc);
-  vee_eigen(Rd.transpose()*Rdddot-hat_eigen(Wc)*hat_eigen(Wc), Wc_dot);
+  vee_eigen(Rc_dot, Wc);
+  vee_eigen(Rc.transpose()*Rc_2dot-hat_eigen(Wc)*hat_eigen(Wc), Wc_dot);
   // Attitude Error 'eR'
-  vee_eigen(.5*(Rd.transpose()*R-R.transpose()*Rd), eR);
+  vee_eigen(.5*(Rc.transpose()*R-R.transpose()*Rc), eR);
   // Angular Velocity Error 'eW'
-  Vector3d eW = W-R.transpose()*Rd*Wc;
+  Vector3d eW = W-R.transpose()*Rc*Wc;
   // Attitude Integral Term
   Vector3d eiR = del_t*(eR+cR*eW) + eiR_last;
   //err_sat(-eiR_sat, eiR_sat, eiR);
   eiR_last = eiR;
   // 3D Moment
-  Vector3d M = -kR*eR-kW*eW-kiR*eiR+hat_eigen(R.transpose()*Rd*Wc)*J*R.transpose()*Rd*Wc+J*R.transpose()*Rd*Wc_dot;// LBFF
+  Vector3d M = -kR*eR-kW*eW-kiR*eiR+hat_eigen(R.transpose()*Rc*Wc)*J*R.transpose()*Rc*Wc+J*R.transpose()*Rc*Wc_dot;// LBFF
 
   Matrix<double, 4, 1> FM;
   FM[0] = f;

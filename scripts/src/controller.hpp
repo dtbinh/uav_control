@@ -20,8 +20,17 @@ public:
 
   double del_t = 0.01;
   Matrix3d J;
-
+  Matrix3d Rc,Rc_dot,Rc_2dot;
   controller(double m_in, double *J_in, double* gains);
-  void GeometricPositionController(double* x_in, double* v_in, double* R_in, double* W_in, double* xc_in, double* Rc_2dot, double* M_out);
+  void GeometricPositionController(double* x_in, double* v_in, double* R_in, double* W_in, double* xc_in, double* M_out);
+  void get_Rc(double* R){
+  Map<Matrix<double,3,3, RowMajor>>(R,3,3) = Rc;
+  };
+  void get_Rc_dot(double* R){
+  Map<Matrix<double,3,3, RowMajor>>(R,3,3) = Rc_dot;
+  };
+  void get_Rc_2dot(double* R){
+  Map<Matrix<double,3,3, RowMajor>>(R,3,3) = Rc_2dot;
+  };
 };
 #endif

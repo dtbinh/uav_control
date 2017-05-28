@@ -959,8 +959,8 @@ typedef npy_clongdouble __pyx_t_5numpy_clongdouble_t;
  */
 typedef npy_cdouble __pyx_t_5numpy_complex_t;
 
-/* "cycontrol.pyx":11
- *         void GeometricPositionController(double *x_in, double *v_in, double* R_in, double* W, double* xc, double* Rc_2dot, double* M_out)
+/* "cycontrol.pyx":14
+ *         void get_Rc_2dot(double* R)
  * 
  * cdef class c_control:             # <<<<<<<<<<<<<<
  *     cdef controller* c_control
@@ -1415,7 +1415,6 @@ static const char __pyx_k_gains[] = "gains";
 static const char __pyx_k_numpy[] = "numpy";
 static const char __pyx_k_range[] = "range";
 static const char __pyx_k_import[] = "__import__";
-static const char __pyx_k_Rc_2dot[] = "Rc_2dot";
 static const char __pyx_k_ValueError[] = "ValueError";
 static const char __pyx_k_ImportError[] = "ImportError";
 static const char __pyx_k_RuntimeError[] = "RuntimeError";
@@ -1434,7 +1433,6 @@ static PyObject *__pyx_n_s_J;
 static PyObject *__pyx_n_s_M_out;
 static PyObject *__pyx_kp_u_Non_native_byte_order_not_suppor;
 static PyObject *__pyx_n_s_R_in;
-static PyObject *__pyx_n_s_Rc_2dot;
 static PyObject *__pyx_n_s_RuntimeError;
 static PyObject *__pyx_n_s_ValueError;
 static PyObject *__pyx_n_s_W;
@@ -1455,7 +1453,11 @@ static PyObject *__pyx_n_s_v_in;
 static PyObject *__pyx_n_s_x_in;
 static PyObject *__pyx_n_s_xc;
 static int __pyx_pf_14cython_control_9c_control___cinit__(struct __pyx_obj_14cython_control_c_control *__pyx_v_self, double __pyx_v_m, PyArrayObject *__pyx_v_J, PyArrayObject *__pyx_v_gains); /* proto */
-static PyObject *__pyx_pf_14cython_control_9c_control_2position_control(struct __pyx_obj_14cython_control_c_control *__pyx_v_self, PyArrayObject *__pyx_v_x_in, PyArrayObject *__pyx_v_v_in, PyArrayObject *__pyx_v_R_in, PyArrayObject *__pyx_v_W, PyArrayObject *__pyx_v_xc, PyArrayObject *__pyx_v_Rc_2dot, PyArrayObject *__pyx_v_M_out); /* proto */
+static PyObject *__pyx_pf_14cython_control_9c_control_2position_control(struct __pyx_obj_14cython_control_c_control *__pyx_v_self, PyArrayObject *__pyx_v_x_in, PyArrayObject *__pyx_v_v_in, PyArrayObject *__pyx_v_R_in, PyArrayObject *__pyx_v_W, PyArrayObject *__pyx_v_xc, PyArrayObject *__pyx_v_M_out); /* proto */
+static PyObject *__pyx_pf_14cython_control_9c_control_4get_kx(struct __pyx_obj_14cython_control_c_control *__pyx_v_self); /* proto */
+static PyObject *__pyx_pf_14cython_control_9c_control_6get_Rc(struct __pyx_obj_14cython_control_c_control *__pyx_v_self, PyArrayObject *__pyx_v_R); /* proto */
+static PyObject *__pyx_pf_14cython_control_9c_control_8get_Rc_dot(struct __pyx_obj_14cython_control_c_control *__pyx_v_self, PyArrayObject *__pyx_v_R); /* proto */
+static PyObject *__pyx_pf_14cython_control_9c_control_10get_Rc_2dot(struct __pyx_obj_14cython_control_c_control *__pyx_v_self, PyArrayObject *__pyx_v_R); /* proto */
 static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, Py_buffer *__pyx_v_info, int __pyx_v_flags); /* proto */
 static void __pyx_pf_5numpy_7ndarray_2__releasebuffer__(PyArrayObject *__pyx_v_self, Py_buffer *__pyx_v_info); /* proto */
 static PyObject *__pyx_tp_new_14cython_control_c_control(PyTypeObject *t, PyObject *a, PyObject *k); /*proto*/
@@ -1469,12 +1471,12 @@ static PyObject *__pyx_tuple__7;
 static PyObject *__pyx_tuple__8;
 static PyObject *__pyx_tuple__9;
 
-/* "cycontrol.pyx":13
+/* "cycontrol.pyx":16
  * cdef class c_control:
  *     cdef controller* c_control
  *     def __cinit__(self, double m, np.ndarray[double,ndim=1] J, np.ndarray[double,ndim=1] gains):             # <<<<<<<<<<<<<<
  *         self.c_control = new controller(m,<double*> J.data, <double*> gains.data)
- *     def position_control(self, np.ndarray[double, ndim=1] x_in, np.ndarray[double, ndim=1] v_in, np.ndarray[double, ndim=1] R_in, np.ndarray[double, ndim=1] W, np.ndarray[double, ndim=1] xc, np.ndarray[double, ndim=1] Rc_2dot, np.ndarray[double, ndim=1] M_out):
+ *     def position_control(self, np.ndarray[double, ndim=1] x_in, np.ndarray[double, ndim=1] v_in, np.ndarray[double, ndim=1] R_in, np.ndarray[double, ndim=1] W, np.ndarray[double, ndim=1] xc, np.ndarray[double, ndim=1] M_out):
  */
 
 /* Python wrapper */
@@ -1507,16 +1509,16 @@ static int __pyx_pw_14cython_control_9c_control_1__cinit__(PyObject *__pyx_v_sel
         case  1:
         if (likely((values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_J)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 3, 3, 1); __PYX_ERR(0, 13, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 3, 3, 1); __PYX_ERR(0, 16, __pyx_L3_error)
         }
         case  2:
         if (likely((values[2] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_gains)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 3, 3, 2); __PYX_ERR(0, 13, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 3, 3, 2); __PYX_ERR(0, 16, __pyx_L3_error)
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__cinit__") < 0)) __PYX_ERR(0, 13, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__cinit__") < 0)) __PYX_ERR(0, 16, __pyx_L3_error)
       }
     } else if (PyTuple_GET_SIZE(__pyx_args) != 3) {
       goto __pyx_L5_argtuple_error;
@@ -1525,20 +1527,20 @@ static int __pyx_pw_14cython_control_9c_control_1__cinit__(PyObject *__pyx_v_sel
       values[1] = PyTuple_GET_ITEM(__pyx_args, 1);
       values[2] = PyTuple_GET_ITEM(__pyx_args, 2);
     }
-    __pyx_v_m = __pyx_PyFloat_AsDouble(values[0]); if (unlikely((__pyx_v_m == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 13, __pyx_L3_error)
+    __pyx_v_m = __pyx_PyFloat_AsDouble(values[0]); if (unlikely((__pyx_v_m == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 16, __pyx_L3_error)
     __pyx_v_J = ((PyArrayObject *)values[1]);
     __pyx_v_gains = ((PyArrayObject *)values[2]);
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 3, 3, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 13, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 3, 3, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 16, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("cython_control.c_control.__cinit__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return -1;
   __pyx_L4_argument_unpacking_done:;
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_J), __pyx_ptype_5numpy_ndarray, 1, "J", 0))) __PYX_ERR(0, 13, __pyx_L1_error)
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_gains), __pyx_ptype_5numpy_ndarray, 1, "gains", 0))) __PYX_ERR(0, 13, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_J), __pyx_ptype_5numpy_ndarray, 1, "J", 0))) __PYX_ERR(0, 16, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_gains), __pyx_ptype_5numpy_ndarray, 1, "gains", 0))) __PYX_ERR(0, 16, __pyx_L1_error)
   __pyx_r = __pyx_pf_14cython_control_9c_control___cinit__(((struct __pyx_obj_14cython_control_c_control *)__pyx_v_self), __pyx_v_m, __pyx_v_J, __pyx_v_gains);
 
   /* function exit code */
@@ -1568,30 +1570,30 @@ static int __pyx_pf_14cython_control_9c_control___cinit__(struct __pyx_obj_14cyt
   __pyx_pybuffernd_gains.rcbuffer = &__pyx_pybuffer_gains;
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
-    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_J.rcbuffer->pybuffer, (PyObject*)__pyx_v_J, &__Pyx_TypeInfo_double, PyBUF_FORMAT| PyBUF_STRIDES, 1, 0, __pyx_stack) == -1)) __PYX_ERR(0, 13, __pyx_L1_error)
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_J.rcbuffer->pybuffer, (PyObject*)__pyx_v_J, &__Pyx_TypeInfo_double, PyBUF_FORMAT| PyBUF_STRIDES, 1, 0, __pyx_stack) == -1)) __PYX_ERR(0, 16, __pyx_L1_error)
   }
   __pyx_pybuffernd_J.diminfo[0].strides = __pyx_pybuffernd_J.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_J.diminfo[0].shape = __pyx_pybuffernd_J.rcbuffer->pybuffer.shape[0];
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
-    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_gains.rcbuffer->pybuffer, (PyObject*)__pyx_v_gains, &__Pyx_TypeInfo_double, PyBUF_FORMAT| PyBUF_STRIDES, 1, 0, __pyx_stack) == -1)) __PYX_ERR(0, 13, __pyx_L1_error)
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_gains.rcbuffer->pybuffer, (PyObject*)__pyx_v_gains, &__Pyx_TypeInfo_double, PyBUF_FORMAT| PyBUF_STRIDES, 1, 0, __pyx_stack) == -1)) __PYX_ERR(0, 16, __pyx_L1_error)
   }
   __pyx_pybuffernd_gains.diminfo[0].strides = __pyx_pybuffernd_gains.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_gains.diminfo[0].shape = __pyx_pybuffernd_gains.rcbuffer->pybuffer.shape[0];
 
-  /* "cycontrol.pyx":14
+  /* "cycontrol.pyx":17
  *     cdef controller* c_control
  *     def __cinit__(self, double m, np.ndarray[double,ndim=1] J, np.ndarray[double,ndim=1] gains):
  *         self.c_control = new controller(m,<double*> J.data, <double*> gains.data)             # <<<<<<<<<<<<<<
- *     def position_control(self, np.ndarray[double, ndim=1] x_in, np.ndarray[double, ndim=1] v_in, np.ndarray[double, ndim=1] R_in, np.ndarray[double, ndim=1] W, np.ndarray[double, ndim=1] xc, np.ndarray[double, ndim=1] Rc_2dot, np.ndarray[double, ndim=1] M_out):
- *         self.c_control.GeometricPositionController(<double*> x_in.data, <double*> v_in.data,<double*> R_in.data, <double*> W.data, <double*> xc.data, <double*> Rc_2dot.data, <double*> M_out.data)
+ *     def position_control(self, np.ndarray[double, ndim=1] x_in, np.ndarray[double, ndim=1] v_in, np.ndarray[double, ndim=1] R_in, np.ndarray[double, ndim=1] W, np.ndarray[double, ndim=1] xc, np.ndarray[double, ndim=1] M_out):
+ *         self.c_control.GeometricPositionController(<double*> x_in.data, <double*> v_in.data,<double*> R_in.data, <double*> W.data, <double*> xc.data, <double*> M_out.data)
  */
   __pyx_v_self->c_control = new controller(__pyx_v_m, ((double *)__pyx_v_J->data), ((double *)__pyx_v_gains->data));
 
-  /* "cycontrol.pyx":13
+  /* "cycontrol.pyx":16
  * cdef class c_control:
  *     cdef controller* c_control
  *     def __cinit__(self, double m, np.ndarray[double,ndim=1] J, np.ndarray[double,ndim=1] gains):             # <<<<<<<<<<<<<<
  *         self.c_control = new controller(m,<double*> J.data, <double*> gains.data)
- *     def position_control(self, np.ndarray[double, ndim=1] x_in, np.ndarray[double, ndim=1] v_in, np.ndarray[double, ndim=1] R_in, np.ndarray[double, ndim=1] W, np.ndarray[double, ndim=1] xc, np.ndarray[double, ndim=1] Rc_2dot, np.ndarray[double, ndim=1] M_out):
+ *     def position_control(self, np.ndarray[double, ndim=1] x_in, np.ndarray[double, ndim=1] v_in, np.ndarray[double, ndim=1] R_in, np.ndarray[double, ndim=1] W, np.ndarray[double, ndim=1] xc, np.ndarray[double, ndim=1] M_out):
  */
 
   /* function exit code */
@@ -1616,11 +1618,12 @@ static int __pyx_pf_14cython_control_9c_control___cinit__(struct __pyx_obj_14cyt
   return __pyx_r;
 }
 
-/* "cycontrol.pyx":15
+/* "cycontrol.pyx":18
  *     def __cinit__(self, double m, np.ndarray[double,ndim=1] J, np.ndarray[double,ndim=1] gains):
  *         self.c_control = new controller(m,<double*> J.data, <double*> gains.data)
- *     def position_control(self, np.ndarray[double, ndim=1] x_in, np.ndarray[double, ndim=1] v_in, np.ndarray[double, ndim=1] R_in, np.ndarray[double, ndim=1] W, np.ndarray[double, ndim=1] xc, np.ndarray[double, ndim=1] Rc_2dot, np.ndarray[double, ndim=1] M_out):             # <<<<<<<<<<<<<<
- *         self.c_control.GeometricPositionController(<double*> x_in.data, <double*> v_in.data,<double*> R_in.data, <double*> W.data, <double*> xc.data, <double*> Rc_2dot.data, <double*> M_out.data)
+ *     def position_control(self, np.ndarray[double, ndim=1] x_in, np.ndarray[double, ndim=1] v_in, np.ndarray[double, ndim=1] R_in, np.ndarray[double, ndim=1] W, np.ndarray[double, ndim=1] xc, np.ndarray[double, ndim=1] M_out):             # <<<<<<<<<<<<<<
+ *         self.c_control.GeometricPositionController(<double*> x_in.data, <double*> v_in.data,<double*> R_in.data, <double*> W.data, <double*> xc.data, <double*> M_out.data)
+ *     def get_kx(self):
  */
 
 /* Python wrapper */
@@ -1631,19 +1634,17 @@ static PyObject *__pyx_pw_14cython_control_9c_control_3position_control(PyObject
   PyArrayObject *__pyx_v_R_in = 0;
   PyArrayObject *__pyx_v_W = 0;
   PyArrayObject *__pyx_v_xc = 0;
-  PyArrayObject *__pyx_v_Rc_2dot = 0;
   PyArrayObject *__pyx_v_M_out = 0;
   PyObject *__pyx_r = 0;
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("position_control (wrapper)", 0);
   {
-    static PyObject **__pyx_pyargnames[] = {&__pyx_n_s_x_in,&__pyx_n_s_v_in,&__pyx_n_s_R_in,&__pyx_n_s_W,&__pyx_n_s_xc,&__pyx_n_s_Rc_2dot,&__pyx_n_s_M_out,0};
-    PyObject* values[7] = {0,0,0,0,0,0,0};
+    static PyObject **__pyx_pyargnames[] = {&__pyx_n_s_x_in,&__pyx_n_s_v_in,&__pyx_n_s_R_in,&__pyx_n_s_W,&__pyx_n_s_xc,&__pyx_n_s_M_out,0};
+    PyObject* values[6] = {0,0,0,0,0,0};
     if (unlikely(__pyx_kwds)) {
       Py_ssize_t kw_args;
       const Py_ssize_t pos_args = PyTuple_GET_SIZE(__pyx_args);
       switch (pos_args) {
-        case  7: values[6] = PyTuple_GET_ITEM(__pyx_args, 6);
         case  6: values[5] = PyTuple_GET_ITEM(__pyx_args, 5);
         case  5: values[4] = PyTuple_GET_ITEM(__pyx_args, 4);
         case  4: values[3] = PyTuple_GET_ITEM(__pyx_args, 3);
@@ -1661,38 +1662,33 @@ static PyObject *__pyx_pw_14cython_control_9c_control_3position_control(PyObject
         case  1:
         if (likely((values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_v_in)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("position_control", 1, 7, 7, 1); __PYX_ERR(0, 15, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("position_control", 1, 6, 6, 1); __PYX_ERR(0, 18, __pyx_L3_error)
         }
         case  2:
         if (likely((values[2] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_R_in)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("position_control", 1, 7, 7, 2); __PYX_ERR(0, 15, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("position_control", 1, 6, 6, 2); __PYX_ERR(0, 18, __pyx_L3_error)
         }
         case  3:
         if (likely((values[3] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_W)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("position_control", 1, 7, 7, 3); __PYX_ERR(0, 15, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("position_control", 1, 6, 6, 3); __PYX_ERR(0, 18, __pyx_L3_error)
         }
         case  4:
         if (likely((values[4] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_xc)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("position_control", 1, 7, 7, 4); __PYX_ERR(0, 15, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("position_control", 1, 6, 6, 4); __PYX_ERR(0, 18, __pyx_L3_error)
         }
         case  5:
-        if (likely((values[5] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_Rc_2dot)) != 0)) kw_args--;
+        if (likely((values[5] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_M_out)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("position_control", 1, 7, 7, 5); __PYX_ERR(0, 15, __pyx_L3_error)
-        }
-        case  6:
-        if (likely((values[6] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_M_out)) != 0)) kw_args--;
-        else {
-          __Pyx_RaiseArgtupleInvalid("position_control", 1, 7, 7, 6); __PYX_ERR(0, 15, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("position_control", 1, 6, 6, 5); __PYX_ERR(0, 18, __pyx_L3_error)
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "position_control") < 0)) __PYX_ERR(0, 15, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "position_control") < 0)) __PYX_ERR(0, 18, __pyx_L3_error)
       }
-    } else if (PyTuple_GET_SIZE(__pyx_args) != 7) {
+    } else if (PyTuple_GET_SIZE(__pyx_args) != 6) {
       goto __pyx_L5_argtuple_error;
     } else {
       values[0] = PyTuple_GET_ITEM(__pyx_args, 0);
@@ -1701,32 +1697,29 @@ static PyObject *__pyx_pw_14cython_control_9c_control_3position_control(PyObject
       values[3] = PyTuple_GET_ITEM(__pyx_args, 3);
       values[4] = PyTuple_GET_ITEM(__pyx_args, 4);
       values[5] = PyTuple_GET_ITEM(__pyx_args, 5);
-      values[6] = PyTuple_GET_ITEM(__pyx_args, 6);
     }
     __pyx_v_x_in = ((PyArrayObject *)values[0]);
     __pyx_v_v_in = ((PyArrayObject *)values[1]);
     __pyx_v_R_in = ((PyArrayObject *)values[2]);
     __pyx_v_W = ((PyArrayObject *)values[3]);
     __pyx_v_xc = ((PyArrayObject *)values[4]);
-    __pyx_v_Rc_2dot = ((PyArrayObject *)values[5]);
-    __pyx_v_M_out = ((PyArrayObject *)values[6]);
+    __pyx_v_M_out = ((PyArrayObject *)values[5]);
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("position_control", 1, 7, 7, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 15, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("position_control", 1, 6, 6, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 18, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("cython_control.c_control.position_control", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_x_in), __pyx_ptype_5numpy_ndarray, 1, "x_in", 0))) __PYX_ERR(0, 15, __pyx_L1_error)
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_v_in), __pyx_ptype_5numpy_ndarray, 1, "v_in", 0))) __PYX_ERR(0, 15, __pyx_L1_error)
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_R_in), __pyx_ptype_5numpy_ndarray, 1, "R_in", 0))) __PYX_ERR(0, 15, __pyx_L1_error)
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_W), __pyx_ptype_5numpy_ndarray, 1, "W", 0))) __PYX_ERR(0, 15, __pyx_L1_error)
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_xc), __pyx_ptype_5numpy_ndarray, 1, "xc", 0))) __PYX_ERR(0, 15, __pyx_L1_error)
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_Rc_2dot), __pyx_ptype_5numpy_ndarray, 1, "Rc_2dot", 0))) __PYX_ERR(0, 15, __pyx_L1_error)
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_M_out), __pyx_ptype_5numpy_ndarray, 1, "M_out", 0))) __PYX_ERR(0, 15, __pyx_L1_error)
-  __pyx_r = __pyx_pf_14cython_control_9c_control_2position_control(((struct __pyx_obj_14cython_control_c_control *)__pyx_v_self), __pyx_v_x_in, __pyx_v_v_in, __pyx_v_R_in, __pyx_v_W, __pyx_v_xc, __pyx_v_Rc_2dot, __pyx_v_M_out);
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_x_in), __pyx_ptype_5numpy_ndarray, 1, "x_in", 0))) __PYX_ERR(0, 18, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_v_in), __pyx_ptype_5numpy_ndarray, 1, "v_in", 0))) __PYX_ERR(0, 18, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_R_in), __pyx_ptype_5numpy_ndarray, 1, "R_in", 0))) __PYX_ERR(0, 18, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_W), __pyx_ptype_5numpy_ndarray, 1, "W", 0))) __PYX_ERR(0, 18, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_xc), __pyx_ptype_5numpy_ndarray, 1, "xc", 0))) __PYX_ERR(0, 18, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_M_out), __pyx_ptype_5numpy_ndarray, 1, "M_out", 0))) __PYX_ERR(0, 18, __pyx_L1_error)
+  __pyx_r = __pyx_pf_14cython_control_9c_control_2position_control(((struct __pyx_obj_14cython_control_c_control *)__pyx_v_self), __pyx_v_x_in, __pyx_v_v_in, __pyx_v_R_in, __pyx_v_W, __pyx_v_xc, __pyx_v_M_out);
 
   /* function exit code */
   goto __pyx_L0;
@@ -1737,13 +1730,11 @@ static PyObject *__pyx_pw_14cython_control_9c_control_3position_control(PyObject
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_14cython_control_9c_control_2position_control(struct __pyx_obj_14cython_control_c_control *__pyx_v_self, PyArrayObject *__pyx_v_x_in, PyArrayObject *__pyx_v_v_in, PyArrayObject *__pyx_v_R_in, PyArrayObject *__pyx_v_W, PyArrayObject *__pyx_v_xc, PyArrayObject *__pyx_v_Rc_2dot, PyArrayObject *__pyx_v_M_out) {
+static PyObject *__pyx_pf_14cython_control_9c_control_2position_control(struct __pyx_obj_14cython_control_c_control *__pyx_v_self, PyArrayObject *__pyx_v_x_in, PyArrayObject *__pyx_v_v_in, PyArrayObject *__pyx_v_R_in, PyArrayObject *__pyx_v_W, PyArrayObject *__pyx_v_xc, PyArrayObject *__pyx_v_M_out) {
   __Pyx_LocalBuf_ND __pyx_pybuffernd_M_out;
   __Pyx_Buffer __pyx_pybuffer_M_out;
   __Pyx_LocalBuf_ND __pyx_pybuffernd_R_in;
   __Pyx_Buffer __pyx_pybuffer_R_in;
-  __Pyx_LocalBuf_ND __pyx_pybuffernd_Rc_2dot;
-  __Pyx_Buffer __pyx_pybuffer_Rc_2dot;
   __Pyx_LocalBuf_ND __pyx_pybuffernd_W;
   __Pyx_Buffer __pyx_pybuffer_W;
   __Pyx_LocalBuf_ND __pyx_pybuffernd_v_in;
@@ -1775,62 +1766,56 @@ static PyObject *__pyx_pf_14cython_control_9c_control_2position_control(struct _
   __pyx_pybuffer_xc.refcount = 0;
   __pyx_pybuffernd_xc.data = NULL;
   __pyx_pybuffernd_xc.rcbuffer = &__pyx_pybuffer_xc;
-  __pyx_pybuffer_Rc_2dot.pybuffer.buf = NULL;
-  __pyx_pybuffer_Rc_2dot.refcount = 0;
-  __pyx_pybuffernd_Rc_2dot.data = NULL;
-  __pyx_pybuffernd_Rc_2dot.rcbuffer = &__pyx_pybuffer_Rc_2dot;
   __pyx_pybuffer_M_out.pybuffer.buf = NULL;
   __pyx_pybuffer_M_out.refcount = 0;
   __pyx_pybuffernd_M_out.data = NULL;
   __pyx_pybuffernd_M_out.rcbuffer = &__pyx_pybuffer_M_out;
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
-    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_x_in.rcbuffer->pybuffer, (PyObject*)__pyx_v_x_in, &__Pyx_TypeInfo_double, PyBUF_FORMAT| PyBUF_STRIDES, 1, 0, __pyx_stack) == -1)) __PYX_ERR(0, 15, __pyx_L1_error)
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_x_in.rcbuffer->pybuffer, (PyObject*)__pyx_v_x_in, &__Pyx_TypeInfo_double, PyBUF_FORMAT| PyBUF_STRIDES, 1, 0, __pyx_stack) == -1)) __PYX_ERR(0, 18, __pyx_L1_error)
   }
   __pyx_pybuffernd_x_in.diminfo[0].strides = __pyx_pybuffernd_x_in.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_x_in.diminfo[0].shape = __pyx_pybuffernd_x_in.rcbuffer->pybuffer.shape[0];
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
-    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_v_in.rcbuffer->pybuffer, (PyObject*)__pyx_v_v_in, &__Pyx_TypeInfo_double, PyBUF_FORMAT| PyBUF_STRIDES, 1, 0, __pyx_stack) == -1)) __PYX_ERR(0, 15, __pyx_L1_error)
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_v_in.rcbuffer->pybuffer, (PyObject*)__pyx_v_v_in, &__Pyx_TypeInfo_double, PyBUF_FORMAT| PyBUF_STRIDES, 1, 0, __pyx_stack) == -1)) __PYX_ERR(0, 18, __pyx_L1_error)
   }
   __pyx_pybuffernd_v_in.diminfo[0].strides = __pyx_pybuffernd_v_in.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_v_in.diminfo[0].shape = __pyx_pybuffernd_v_in.rcbuffer->pybuffer.shape[0];
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
-    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_R_in.rcbuffer->pybuffer, (PyObject*)__pyx_v_R_in, &__Pyx_TypeInfo_double, PyBUF_FORMAT| PyBUF_STRIDES, 1, 0, __pyx_stack) == -1)) __PYX_ERR(0, 15, __pyx_L1_error)
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_R_in.rcbuffer->pybuffer, (PyObject*)__pyx_v_R_in, &__Pyx_TypeInfo_double, PyBUF_FORMAT| PyBUF_STRIDES, 1, 0, __pyx_stack) == -1)) __PYX_ERR(0, 18, __pyx_L1_error)
   }
   __pyx_pybuffernd_R_in.diminfo[0].strides = __pyx_pybuffernd_R_in.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_R_in.diminfo[0].shape = __pyx_pybuffernd_R_in.rcbuffer->pybuffer.shape[0];
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
-    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_W.rcbuffer->pybuffer, (PyObject*)__pyx_v_W, &__Pyx_TypeInfo_double, PyBUF_FORMAT| PyBUF_STRIDES, 1, 0, __pyx_stack) == -1)) __PYX_ERR(0, 15, __pyx_L1_error)
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_W.rcbuffer->pybuffer, (PyObject*)__pyx_v_W, &__Pyx_TypeInfo_double, PyBUF_FORMAT| PyBUF_STRIDES, 1, 0, __pyx_stack) == -1)) __PYX_ERR(0, 18, __pyx_L1_error)
   }
   __pyx_pybuffernd_W.diminfo[0].strides = __pyx_pybuffernd_W.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_W.diminfo[0].shape = __pyx_pybuffernd_W.rcbuffer->pybuffer.shape[0];
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
-    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_xc.rcbuffer->pybuffer, (PyObject*)__pyx_v_xc, &__Pyx_TypeInfo_double, PyBUF_FORMAT| PyBUF_STRIDES, 1, 0, __pyx_stack) == -1)) __PYX_ERR(0, 15, __pyx_L1_error)
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_xc.rcbuffer->pybuffer, (PyObject*)__pyx_v_xc, &__Pyx_TypeInfo_double, PyBUF_FORMAT| PyBUF_STRIDES, 1, 0, __pyx_stack) == -1)) __PYX_ERR(0, 18, __pyx_L1_error)
   }
   __pyx_pybuffernd_xc.diminfo[0].strides = __pyx_pybuffernd_xc.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_xc.diminfo[0].shape = __pyx_pybuffernd_xc.rcbuffer->pybuffer.shape[0];
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
-    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_Rc_2dot.rcbuffer->pybuffer, (PyObject*)__pyx_v_Rc_2dot, &__Pyx_TypeInfo_double, PyBUF_FORMAT| PyBUF_STRIDES, 1, 0, __pyx_stack) == -1)) __PYX_ERR(0, 15, __pyx_L1_error)
-  }
-  __pyx_pybuffernd_Rc_2dot.diminfo[0].strides = __pyx_pybuffernd_Rc_2dot.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_Rc_2dot.diminfo[0].shape = __pyx_pybuffernd_Rc_2dot.rcbuffer->pybuffer.shape[0];
-  {
-    __Pyx_BufFmt_StackElem __pyx_stack[1];
-    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_M_out.rcbuffer->pybuffer, (PyObject*)__pyx_v_M_out, &__Pyx_TypeInfo_double, PyBUF_FORMAT| PyBUF_STRIDES, 1, 0, __pyx_stack) == -1)) __PYX_ERR(0, 15, __pyx_L1_error)
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_M_out.rcbuffer->pybuffer, (PyObject*)__pyx_v_M_out, &__Pyx_TypeInfo_double, PyBUF_FORMAT| PyBUF_STRIDES, 1, 0, __pyx_stack) == -1)) __PYX_ERR(0, 18, __pyx_L1_error)
   }
   __pyx_pybuffernd_M_out.diminfo[0].strides = __pyx_pybuffernd_M_out.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_M_out.diminfo[0].shape = __pyx_pybuffernd_M_out.rcbuffer->pybuffer.shape[0];
 
-  /* "cycontrol.pyx":16
+  /* "cycontrol.pyx":19
  *         self.c_control = new controller(m,<double*> J.data, <double*> gains.data)
- *     def position_control(self, np.ndarray[double, ndim=1] x_in, np.ndarray[double, ndim=1] v_in, np.ndarray[double, ndim=1] R_in, np.ndarray[double, ndim=1] W, np.ndarray[double, ndim=1] xc, np.ndarray[double, ndim=1] Rc_2dot, np.ndarray[double, ndim=1] M_out):
- *         self.c_control.GeometricPositionController(<double*> x_in.data, <double*> v_in.data,<double*> R_in.data, <double*> W.data, <double*> xc.data, <double*> Rc_2dot.data, <double*> M_out.data)             # <<<<<<<<<<<<<<
+ *     def position_control(self, np.ndarray[double, ndim=1] x_in, np.ndarray[double, ndim=1] v_in, np.ndarray[double, ndim=1] R_in, np.ndarray[double, ndim=1] W, np.ndarray[double, ndim=1] xc, np.ndarray[double, ndim=1] M_out):
+ *         self.c_control.GeometricPositionController(<double*> x_in.data, <double*> v_in.data,<double*> R_in.data, <double*> W.data, <double*> xc.data, <double*> M_out.data)             # <<<<<<<<<<<<<<
+ *     def get_kx(self):
+ *         return self.c_control.kx
  */
-  __pyx_v_self->c_control->GeometricPositionController(((double *)__pyx_v_x_in->data), ((double *)__pyx_v_v_in->data), ((double *)__pyx_v_R_in->data), ((double *)__pyx_v_W->data), ((double *)__pyx_v_xc->data), ((double *)__pyx_v_Rc_2dot->data), ((double *)__pyx_v_M_out->data));
+  __pyx_v_self->c_control->GeometricPositionController(((double *)__pyx_v_x_in->data), ((double *)__pyx_v_v_in->data), ((double *)__pyx_v_R_in->data), ((double *)__pyx_v_W->data), ((double *)__pyx_v_xc->data), ((double *)__pyx_v_M_out->data));
 
-  /* "cycontrol.pyx":15
+  /* "cycontrol.pyx":18
  *     def __cinit__(self, double m, np.ndarray[double,ndim=1] J, np.ndarray[double,ndim=1] gains):
  *         self.c_control = new controller(m,<double*> J.data, <double*> gains.data)
- *     def position_control(self, np.ndarray[double, ndim=1] x_in, np.ndarray[double, ndim=1] v_in, np.ndarray[double, ndim=1] R_in, np.ndarray[double, ndim=1] W, np.ndarray[double, ndim=1] xc, np.ndarray[double, ndim=1] Rc_2dot, np.ndarray[double, ndim=1] M_out):             # <<<<<<<<<<<<<<
- *         self.c_control.GeometricPositionController(<double*> x_in.data, <double*> v_in.data,<double*> R_in.data, <double*> W.data, <double*> xc.data, <double*> Rc_2dot.data, <double*> M_out.data)
+ *     def position_control(self, np.ndarray[double, ndim=1] x_in, np.ndarray[double, ndim=1] v_in, np.ndarray[double, ndim=1] R_in, np.ndarray[double, ndim=1] W, np.ndarray[double, ndim=1] xc, np.ndarray[double, ndim=1] M_out):             # <<<<<<<<<<<<<<
+ *         self.c_control.GeometricPositionController(<double*> x_in.data, <double*> v_in.data,<double*> R_in.data, <double*> W.data, <double*> xc.data, <double*> M_out.data)
+ *     def get_kx(self):
  */
 
   /* function exit code */
@@ -1843,7 +1828,6 @@ static PyObject *__pyx_pf_14cython_control_9c_control_2position_control(struct _
     __Pyx_ErrFetch(&__pyx_type, &__pyx_value, &__pyx_tb);
     __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_M_out.rcbuffer->pybuffer);
     __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_R_in.rcbuffer->pybuffer);
-    __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_Rc_2dot.rcbuffer->pybuffer);
     __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_W.rcbuffer->pybuffer);
     __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_v_in.rcbuffer->pybuffer);
     __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_x_in.rcbuffer->pybuffer);
@@ -1855,11 +1839,306 @@ static PyObject *__pyx_pf_14cython_control_9c_control_2position_control(struct _
   __pyx_L0:;
   __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_M_out.rcbuffer->pybuffer);
   __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_R_in.rcbuffer->pybuffer);
-  __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_Rc_2dot.rcbuffer->pybuffer);
   __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_W.rcbuffer->pybuffer);
   __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_v_in.rcbuffer->pybuffer);
   __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_x_in.rcbuffer->pybuffer);
   __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_xc.rcbuffer->pybuffer);
+  __pyx_L2:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "cycontrol.pyx":20
+ *     def position_control(self, np.ndarray[double, ndim=1] x_in, np.ndarray[double, ndim=1] v_in, np.ndarray[double, ndim=1] R_in, np.ndarray[double, ndim=1] W, np.ndarray[double, ndim=1] xc, np.ndarray[double, ndim=1] M_out):
+ *         self.c_control.GeometricPositionController(<double*> x_in.data, <double*> v_in.data,<double*> R_in.data, <double*> W.data, <double*> xc.data, <double*> M_out.data)
+ *     def get_kx(self):             # <<<<<<<<<<<<<<
+ *         return self.c_control.kx
+ *     def get_Rc(self, np.ndarray[double,ndim =1] R):
+ */
+
+/* Python wrapper */
+static PyObject *__pyx_pw_14cython_control_9c_control_5get_kx(PyObject *__pyx_v_self, CYTHON_UNUSED PyObject *unused); /*proto*/
+static PyObject *__pyx_pw_14cython_control_9c_control_5get_kx(PyObject *__pyx_v_self, CYTHON_UNUSED PyObject *unused) {
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("get_kx (wrapper)", 0);
+  __pyx_r = __pyx_pf_14cython_control_9c_control_4get_kx(((struct __pyx_obj_14cython_control_c_control *)__pyx_v_self));
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_14cython_control_9c_control_4get_kx(struct __pyx_obj_14cython_control_c_control *__pyx_v_self) {
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  __Pyx_RefNannySetupContext("get_kx", 0);
+
+  /* "cycontrol.pyx":21
+ *         self.c_control.GeometricPositionController(<double*> x_in.data, <double*> v_in.data,<double*> R_in.data, <double*> W.data, <double*> xc.data, <double*> M_out.data)
+ *     def get_kx(self):
+ *         return self.c_control.kx             # <<<<<<<<<<<<<<
+ *     def get_Rc(self, np.ndarray[double,ndim =1] R):
+ *         self.c_control.get_Rc(<double*> R.data)
+ */
+  __Pyx_XDECREF(__pyx_r);
+  __pyx_t_1 = PyFloat_FromDouble(__pyx_v_self->c_control->kx); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 21, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_r = __pyx_t_1;
+  __pyx_t_1 = 0;
+  goto __pyx_L0;
+
+  /* "cycontrol.pyx":20
+ *     def position_control(self, np.ndarray[double, ndim=1] x_in, np.ndarray[double, ndim=1] v_in, np.ndarray[double, ndim=1] R_in, np.ndarray[double, ndim=1] W, np.ndarray[double, ndim=1] xc, np.ndarray[double, ndim=1] M_out):
+ *         self.c_control.GeometricPositionController(<double*> x_in.data, <double*> v_in.data,<double*> R_in.data, <double*> W.data, <double*> xc.data, <double*> M_out.data)
+ *     def get_kx(self):             # <<<<<<<<<<<<<<
+ *         return self.c_control.kx
+ *     def get_Rc(self, np.ndarray[double,ndim =1] R):
+ */
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_AddTraceback("cython_control.c_control.get_kx", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "cycontrol.pyx":22
+ *     def get_kx(self):
+ *         return self.c_control.kx
+ *     def get_Rc(self, np.ndarray[double,ndim =1] R):             # <<<<<<<<<<<<<<
+ *         self.c_control.get_Rc(<double*> R.data)
+ *     def get_Rc_dot(self, np.ndarray[double,ndim =1] R):
+ */
+
+/* Python wrapper */
+static PyObject *__pyx_pw_14cython_control_9c_control_7get_Rc(PyObject *__pyx_v_self, PyObject *__pyx_v_R); /*proto*/
+static PyObject *__pyx_pw_14cython_control_9c_control_7get_Rc(PyObject *__pyx_v_self, PyObject *__pyx_v_R) {
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("get_Rc (wrapper)", 0);
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_R), __pyx_ptype_5numpy_ndarray, 1, "R", 0))) __PYX_ERR(0, 22, __pyx_L1_error)
+  __pyx_r = __pyx_pf_14cython_control_9c_control_6get_Rc(((struct __pyx_obj_14cython_control_c_control *)__pyx_v_self), ((PyArrayObject *)__pyx_v_R));
+
+  /* function exit code */
+  goto __pyx_L0;
+  __pyx_L1_error:;
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_14cython_control_9c_control_6get_Rc(struct __pyx_obj_14cython_control_c_control *__pyx_v_self, PyArrayObject *__pyx_v_R) {
+  __Pyx_LocalBuf_ND __pyx_pybuffernd_R;
+  __Pyx_Buffer __pyx_pybuffer_R;
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("get_Rc", 0);
+  __pyx_pybuffer_R.pybuffer.buf = NULL;
+  __pyx_pybuffer_R.refcount = 0;
+  __pyx_pybuffernd_R.data = NULL;
+  __pyx_pybuffernd_R.rcbuffer = &__pyx_pybuffer_R;
+  {
+    __Pyx_BufFmt_StackElem __pyx_stack[1];
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_R.rcbuffer->pybuffer, (PyObject*)__pyx_v_R, &__Pyx_TypeInfo_double, PyBUF_FORMAT| PyBUF_STRIDES, 1, 0, __pyx_stack) == -1)) __PYX_ERR(0, 22, __pyx_L1_error)
+  }
+  __pyx_pybuffernd_R.diminfo[0].strides = __pyx_pybuffernd_R.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_R.diminfo[0].shape = __pyx_pybuffernd_R.rcbuffer->pybuffer.shape[0];
+
+  /* "cycontrol.pyx":23
+ *         return self.c_control.kx
+ *     def get_Rc(self, np.ndarray[double,ndim =1] R):
+ *         self.c_control.get_Rc(<double*> R.data)             # <<<<<<<<<<<<<<
+ *     def get_Rc_dot(self, np.ndarray[double,ndim =1] R):
+ *         self.c_control.get_Rc_dot(<double*> R.data)
+ */
+  __pyx_v_self->c_control->get_Rc(((double *)__pyx_v_R->data));
+
+  /* "cycontrol.pyx":22
+ *     def get_kx(self):
+ *         return self.c_control.kx
+ *     def get_Rc(self, np.ndarray[double,ndim =1] R):             # <<<<<<<<<<<<<<
+ *         self.c_control.get_Rc(<double*> R.data)
+ *     def get_Rc_dot(self, np.ndarray[double,ndim =1] R):
+ */
+
+  /* function exit code */
+  __pyx_r = Py_None; __Pyx_INCREF(Py_None);
+  goto __pyx_L0;
+  __pyx_L1_error:;
+  { PyObject *__pyx_type, *__pyx_value, *__pyx_tb;
+    __Pyx_PyThreadState_declare
+    __Pyx_PyThreadState_assign
+    __Pyx_ErrFetch(&__pyx_type, &__pyx_value, &__pyx_tb);
+    __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_R.rcbuffer->pybuffer);
+  __Pyx_ErrRestore(__pyx_type, __pyx_value, __pyx_tb);}
+  __Pyx_AddTraceback("cython_control.c_control.get_Rc", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  goto __pyx_L2;
+  __pyx_L0:;
+  __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_R.rcbuffer->pybuffer);
+  __pyx_L2:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "cycontrol.pyx":24
+ *     def get_Rc(self, np.ndarray[double,ndim =1] R):
+ *         self.c_control.get_Rc(<double*> R.data)
+ *     def get_Rc_dot(self, np.ndarray[double,ndim =1] R):             # <<<<<<<<<<<<<<
+ *         self.c_control.get_Rc_dot(<double*> R.data)
+ *     def get_Rc_2dot(self, np.ndarray[double,ndim =1] R):
+ */
+
+/* Python wrapper */
+static PyObject *__pyx_pw_14cython_control_9c_control_9get_Rc_dot(PyObject *__pyx_v_self, PyObject *__pyx_v_R); /*proto*/
+static PyObject *__pyx_pw_14cython_control_9c_control_9get_Rc_dot(PyObject *__pyx_v_self, PyObject *__pyx_v_R) {
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("get_Rc_dot (wrapper)", 0);
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_R), __pyx_ptype_5numpy_ndarray, 1, "R", 0))) __PYX_ERR(0, 24, __pyx_L1_error)
+  __pyx_r = __pyx_pf_14cython_control_9c_control_8get_Rc_dot(((struct __pyx_obj_14cython_control_c_control *)__pyx_v_self), ((PyArrayObject *)__pyx_v_R));
+
+  /* function exit code */
+  goto __pyx_L0;
+  __pyx_L1_error:;
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_14cython_control_9c_control_8get_Rc_dot(struct __pyx_obj_14cython_control_c_control *__pyx_v_self, PyArrayObject *__pyx_v_R) {
+  __Pyx_LocalBuf_ND __pyx_pybuffernd_R;
+  __Pyx_Buffer __pyx_pybuffer_R;
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("get_Rc_dot", 0);
+  __pyx_pybuffer_R.pybuffer.buf = NULL;
+  __pyx_pybuffer_R.refcount = 0;
+  __pyx_pybuffernd_R.data = NULL;
+  __pyx_pybuffernd_R.rcbuffer = &__pyx_pybuffer_R;
+  {
+    __Pyx_BufFmt_StackElem __pyx_stack[1];
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_R.rcbuffer->pybuffer, (PyObject*)__pyx_v_R, &__Pyx_TypeInfo_double, PyBUF_FORMAT| PyBUF_STRIDES, 1, 0, __pyx_stack) == -1)) __PYX_ERR(0, 24, __pyx_L1_error)
+  }
+  __pyx_pybuffernd_R.diminfo[0].strides = __pyx_pybuffernd_R.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_R.diminfo[0].shape = __pyx_pybuffernd_R.rcbuffer->pybuffer.shape[0];
+
+  /* "cycontrol.pyx":25
+ *         self.c_control.get_Rc(<double*> R.data)
+ *     def get_Rc_dot(self, np.ndarray[double,ndim =1] R):
+ *         self.c_control.get_Rc_dot(<double*> R.data)             # <<<<<<<<<<<<<<
+ *     def get_Rc_2dot(self, np.ndarray[double,ndim =1] R):
+ *         self.c_control.get_Rc_2dot(<double*> R.data)
+ */
+  __pyx_v_self->c_control->get_Rc_dot(((double *)__pyx_v_R->data));
+
+  /* "cycontrol.pyx":24
+ *     def get_Rc(self, np.ndarray[double,ndim =1] R):
+ *         self.c_control.get_Rc(<double*> R.data)
+ *     def get_Rc_dot(self, np.ndarray[double,ndim =1] R):             # <<<<<<<<<<<<<<
+ *         self.c_control.get_Rc_dot(<double*> R.data)
+ *     def get_Rc_2dot(self, np.ndarray[double,ndim =1] R):
+ */
+
+  /* function exit code */
+  __pyx_r = Py_None; __Pyx_INCREF(Py_None);
+  goto __pyx_L0;
+  __pyx_L1_error:;
+  { PyObject *__pyx_type, *__pyx_value, *__pyx_tb;
+    __Pyx_PyThreadState_declare
+    __Pyx_PyThreadState_assign
+    __Pyx_ErrFetch(&__pyx_type, &__pyx_value, &__pyx_tb);
+    __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_R.rcbuffer->pybuffer);
+  __Pyx_ErrRestore(__pyx_type, __pyx_value, __pyx_tb);}
+  __Pyx_AddTraceback("cython_control.c_control.get_Rc_dot", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  goto __pyx_L2;
+  __pyx_L0:;
+  __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_R.rcbuffer->pybuffer);
+  __pyx_L2:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "cycontrol.pyx":26
+ *     def get_Rc_dot(self, np.ndarray[double,ndim =1] R):
+ *         self.c_control.get_Rc_dot(<double*> R.data)
+ *     def get_Rc_2dot(self, np.ndarray[double,ndim =1] R):             # <<<<<<<<<<<<<<
+ *         self.c_control.get_Rc_2dot(<double*> R.data)
+ */
+
+/* Python wrapper */
+static PyObject *__pyx_pw_14cython_control_9c_control_11get_Rc_2dot(PyObject *__pyx_v_self, PyObject *__pyx_v_R); /*proto*/
+static PyObject *__pyx_pw_14cython_control_9c_control_11get_Rc_2dot(PyObject *__pyx_v_self, PyObject *__pyx_v_R) {
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("get_Rc_2dot (wrapper)", 0);
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_R), __pyx_ptype_5numpy_ndarray, 1, "R", 0))) __PYX_ERR(0, 26, __pyx_L1_error)
+  __pyx_r = __pyx_pf_14cython_control_9c_control_10get_Rc_2dot(((struct __pyx_obj_14cython_control_c_control *)__pyx_v_self), ((PyArrayObject *)__pyx_v_R));
+
+  /* function exit code */
+  goto __pyx_L0;
+  __pyx_L1_error:;
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_14cython_control_9c_control_10get_Rc_2dot(struct __pyx_obj_14cython_control_c_control *__pyx_v_self, PyArrayObject *__pyx_v_R) {
+  __Pyx_LocalBuf_ND __pyx_pybuffernd_R;
+  __Pyx_Buffer __pyx_pybuffer_R;
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("get_Rc_2dot", 0);
+  __pyx_pybuffer_R.pybuffer.buf = NULL;
+  __pyx_pybuffer_R.refcount = 0;
+  __pyx_pybuffernd_R.data = NULL;
+  __pyx_pybuffernd_R.rcbuffer = &__pyx_pybuffer_R;
+  {
+    __Pyx_BufFmt_StackElem __pyx_stack[1];
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_R.rcbuffer->pybuffer, (PyObject*)__pyx_v_R, &__Pyx_TypeInfo_double, PyBUF_FORMAT| PyBUF_STRIDES, 1, 0, __pyx_stack) == -1)) __PYX_ERR(0, 26, __pyx_L1_error)
+  }
+  __pyx_pybuffernd_R.diminfo[0].strides = __pyx_pybuffernd_R.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_R.diminfo[0].shape = __pyx_pybuffernd_R.rcbuffer->pybuffer.shape[0];
+
+  /* "cycontrol.pyx":27
+ *         self.c_control.get_Rc_dot(<double*> R.data)
+ *     def get_Rc_2dot(self, np.ndarray[double,ndim =1] R):
+ *         self.c_control.get_Rc_2dot(<double*> R.data)             # <<<<<<<<<<<<<<
+ */
+  __pyx_v_self->c_control->get_Rc_2dot(((double *)__pyx_v_R->data));
+
+  /* "cycontrol.pyx":26
+ *     def get_Rc_dot(self, np.ndarray[double,ndim =1] R):
+ *         self.c_control.get_Rc_dot(<double*> R.data)
+ *     def get_Rc_2dot(self, np.ndarray[double,ndim =1] R):             # <<<<<<<<<<<<<<
+ *         self.c_control.get_Rc_2dot(<double*> R.data)
+ */
+
+  /* function exit code */
+  __pyx_r = Py_None; __Pyx_INCREF(Py_None);
+  goto __pyx_L0;
+  __pyx_L1_error:;
+  { PyObject *__pyx_type, *__pyx_value, *__pyx_tb;
+    __Pyx_PyThreadState_declare
+    __Pyx_PyThreadState_assign
+    __Pyx_ErrFetch(&__pyx_type, &__pyx_value, &__pyx_tb);
+    __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_R.rcbuffer->pybuffer);
+  __Pyx_ErrRestore(__pyx_type, __pyx_value, __pyx_tb);}
+  __Pyx_AddTraceback("cython_control.c_control.get_Rc_2dot", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  goto __pyx_L2;
+  __pyx_L0:;
+  __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_R.rcbuffer->pybuffer);
   __pyx_L2:;
   __Pyx_XGIVEREF(__pyx_r);
   __Pyx_RefNannyFinishContext();
@@ -4406,6 +4685,10 @@ static void __pyx_tp_dealloc_14cython_control_c_control(PyObject *o) {
 
 static PyMethodDef __pyx_methods_14cython_control_c_control[] = {
   {"position_control", (PyCFunction)__pyx_pw_14cython_control_9c_control_3position_control, METH_VARARGS|METH_KEYWORDS, 0},
+  {"get_kx", (PyCFunction)__pyx_pw_14cython_control_9c_control_5get_kx, METH_NOARGS, 0},
+  {"get_Rc", (PyCFunction)__pyx_pw_14cython_control_9c_control_7get_Rc, METH_O, 0},
+  {"get_Rc_dot", (PyCFunction)__pyx_pw_14cython_control_9c_control_9get_Rc_dot, METH_O, 0},
+  {"get_Rc_2dot", (PyCFunction)__pyx_pw_14cython_control_9c_control_11get_Rc_2dot, METH_O, 0},
   {0, 0, 0, 0}
 };
 
@@ -4497,7 +4780,6 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s_M_out, __pyx_k_M_out, sizeof(__pyx_k_M_out), 0, 0, 1, 1},
   {&__pyx_kp_u_Non_native_byte_order_not_suppor, __pyx_k_Non_native_byte_order_not_suppor, sizeof(__pyx_k_Non_native_byte_order_not_suppor), 0, 1, 0, 0},
   {&__pyx_n_s_R_in, __pyx_k_R_in, sizeof(__pyx_k_R_in), 0, 0, 1, 1},
-  {&__pyx_n_s_Rc_2dot, __pyx_k_Rc_2dot, sizeof(__pyx_k_Rc_2dot), 0, 0, 1, 1},
   {&__pyx_n_s_RuntimeError, __pyx_k_RuntimeError, sizeof(__pyx_k_RuntimeError), 0, 0, 1, 1},
   {&__pyx_n_s_ValueError, __pyx_k_ValueError, sizeof(__pyx_k_ValueError), 0, 0, 1, 1},
   {&__pyx_n_s_W, __pyx_k_W, sizeof(__pyx_k_W), 0, 0, 1, 1},
@@ -4727,9 +5009,9 @@ PyMODINIT_FUNC PyInit_cython_control(void)
   /*--- Variable export code ---*/
   /*--- Function export code ---*/
   /*--- Type init code ---*/
-  if (PyType_Ready(&__pyx_type_14cython_control_c_control) < 0) __PYX_ERR(0, 11, __pyx_L1_error)
+  if (PyType_Ready(&__pyx_type_14cython_control_c_control) < 0) __PYX_ERR(0, 14, __pyx_L1_error)
   __pyx_type_14cython_control_c_control.tp_print = 0;
-  if (PyObject_SetAttrString(__pyx_m, "c_control", (PyObject *)&__pyx_type_14cython_control_c_control) < 0) __PYX_ERR(0, 11, __pyx_L1_error)
+  if (PyObject_SetAttrString(__pyx_m, "c_control", (PyObject *)&__pyx_type_14cython_control_c_control) < 0) __PYX_ERR(0, 14, __pyx_L1_error)
   __pyx_ptype_14cython_control_c_control = &__pyx_type_14cython_control_c_control;
   /*--- Type import code ---*/
   __pyx_ptype_7cpython_4type_type = __Pyx_ImportType(__Pyx_BUILTIN_MODULE_NAME, "type", 
