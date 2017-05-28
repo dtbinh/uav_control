@@ -29,6 +29,7 @@ class uav(object):
         self.uav_name = rospy.get_param('name/uav')
         self.motor_address = np.fromstring(rospy.get_param('/'+self.uav_name+'/port/i2c'), dtype=int,sep=',')
         self._dt = rospy.get_param('controller/dt')
+	self.m = rospy.get_param('controller/m')
         # initialization of ROS node
         rospy.init_node(self.uav_name)
         self.tf = tf.TransformerROS(True,rospy.Duration(10.0))
@@ -61,7 +62,7 @@ class uav(object):
         self.controller.kR, self.controller.kW = rospy.get_param('controller/gain/att/kp'), rospy.get_param('controller/gain/att/kd')
         #self.controller.kR = rospy.get_param('controller/kR')
         #self.controller.kx = rospy.get_param('controller/kx')
-        self.c_controler = cython_control.c_control(self.m,self._dt,self.J.flatten(),np.ones(6))
+        self.c_controller = cython_control.c_control(self.m,self._dt,J.flatten(),np.ones(6))
         self.F = None
         self.M = None
         l = rospy.get_param('controller/l')
@@ -183,6 +184,8 @@ class uav(object):
                 self.R_U2D.dot(self.b1d), self.b1d_dot, self.b1d_2dot,
                 self.Rc, self.Wc, self.Wc_dot)
         self.F, self.M = self.controller.position_control( self.R, self.W, self.x_ned, self.v_ave_ned, self.x_c_all)
+	c_throttle = np.zeros(4)
+	self.c_controller.position_control(self.x_ned, self.v_ave_ned,self.R,self.W, np.array(self.x_c_all).flatten(),c_throttle)
 
         command = np.concatenate(([self.F],self.M))
         command = np.dot(self.invA, command)
