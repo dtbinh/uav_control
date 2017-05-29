@@ -83,7 +83,7 @@ void controller::GeometricPositionController(double* x_in, double* v_in, double*
   Rc_dot << Rd1dot, Rd2dot, Lddot;
   Rc_2dot << Rd1ddot, Rd2ddot, Ldddot;
   // Vector3d Wc, Wc_dot;
-  vee_eigen(Rc_dot, Wc);
+  vee_eigen(Rc.transpose()*Rc_dot, Wc);
   vee_eigen(Rc.transpose()*Rc_2dot-hat_eigen(Wc)*hat_eigen(Wc), Wc_dot);
   // Attitude Error 'eR'
   vee_eigen(.5*(Rc.transpose()*R-R.transpose()*Rc), eR);
