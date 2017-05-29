@@ -1,24 +1,11 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
-"""
-Created on Mon May 29 11:18:43 2017
-
-@author: simonlibine
-"""
-
-
 from __future__ import division
 import pyximport; pyximport.install()
 # import controller here
-from sim_controller import UAV, hat
 import numpy as np
-from scipy.integrate import odeint
-from scipy.integrate import ode
 import numpy.linalg as la
 import pdb
-import matplotlib.pyplot as plt
-import mpl_toolkits.mplot3d.axes3d as p3
-import matplotlib.animation as animation
 import sys
 #import TrajectoryPython
 def initialisation(a, b, c):
