@@ -4,7 +4,7 @@ import rospy
 import tf
 import dynamic_reconfigure.client
 import numpy as np
-from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import PoseStamped, Point
 from sensor_msgs.msg import Imu
 from controller import *
 import time
@@ -100,12 +100,12 @@ class uav(object):
     def odroid_callback(self, msg):
         self.odroid_f = msg.force
         self.odroid_Moment = msg.Moment
-        print()
-        odroid_a = np.array([msg.force,msg.Moment.x, msg.Moment.y,msg.Moment.z])
-        print(odroid_a)
-        print(self.c_command)
-        print(self.c_command - odroid_a )
-
+        pub_cp = rospy.Publisher('moment_c',Point,queue_size=10)
+        pub_py = rospy.Publisher('moment_py',Point,queue_size=10)
+        pt_c = Point(msg.Moment.x,msg.Moment.y,msg.Moment.z)
+        pt_py = Point(self.c_command[1],self.c_command[2],self.c_command[3])
+        pub_cp.publish(pt_c)
+        pub_py.publish(pt_py)
     def config_callback(self, config, level):
         rospy.loginfo('config update')
         #self.controller.kR = config['kR']
