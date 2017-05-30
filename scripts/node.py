@@ -21,11 +21,13 @@ from dynamic_reconfigure.server import Server
 from uav_control.cfg import gainsConfig
 import thread
 import cython_control
+from odroid.msg import error
 
 class uav(object):
 
     def __init__(self, motor_address = None):
         self.simulation = rospy.get_param('simulation')
+        print('Initializing node')
         self.uav_name = rospy.get_param('name/uav')
         self.motor_address = np.fromstring(rospy.get_param('/'+self.uav_name+'/port/i2c'), dtype=int,sep=',')
         self._dt = rospy.get_param('controller/dt')
@@ -82,7 +84,7 @@ class uav(object):
         self.uav_states = states()
         #self.uav_states.xc = self.x_c
         self.tf_subscriber = tf.TransformListener()
-        self.uav_w = rospy.Subscriber('imu/imu',Imu, self.imu_sub)
+        self.uav_w = rospy.Subscriber('/imu/imu',Imu, self.imu_sub)
         self.dt_vicon = 0.01
         self.v_ave = np.array([0,0,0])
         self.v_ave_ned = self.R_U2D.dot(self.v_ave)
@@ -92,8 +94,17 @@ class uav(object):
         self.v_array = []
         #rospy.wait_for_service('/gain_tuning')
         #self.client = dynamic_reconfigure.client.Client('/gain_config', timeout=30, config_callback=self.config_callback)
+        self.odroid_sub = rospy.Subscriber('/drone_variable',error,self.odroid_callback)
         srv = Server(gainsConfig, self.config_callback)
         rospy.spin()
+    def odroid_callback(self, msg):
+        self.odroid_f = msg.force
+        self.odroid_Moment = msg.Moment
+        print()
+        odroid_a = np.array([msg.force,msg.Moment.x, msg.Moment.y,msg.Moment.z])
+        print(odroid_a)
+        print(self.c_command)
+        print(self.c_command - odroid_a )
 
     def config_callback(self, config, level):
         rospy.loginfo('config update')
@@ -183,7 +194,7 @@ class uav(object):
                 self.Rc, self.Wc, self.Wc_dot)
         #self.F, self.M = self.controller.position_control( self.R, self.W, self.x_ned, self.v_ave_ned, self.x_c_all)
 	self.c_command = np.zeros(4)
-        self.xc_all = np.array([self.xc,self.xc_dot,self.xc_2dot,self.xc_3dot,self.xc_4dot,self.b1d,self.b1d_dot,self.b1d_2dot],np.double).flatten()
+        self.xc_all = np.array([self.R_U2D.dot(self.xc),self.R_U2D.dot(self.xc_dot),self.xc_2dot,self.xc_3dot,self.xc_4dot,self.b1d,self.b1d_dot,self.b1d_2dot],np.double).flatten()
 	self.c_controller.position_control(self.x_ned, self.v_ave_ned,self.R.flatten(),self.W, self.xc_all,self.c_command)
 
         #command = np.concatenate(([self.F],self.M))
@@ -215,7 +226,7 @@ class uav(object):
         self.uav_states.v = self.v_ave_ned.tolist()
         #self.R = self.R_imu
         self.uav_states.R = self.R.flatten().tolist()
-        self.uav_states.xc = self.xc.tolist()
+        self.uav_states.xc = self.xc
         self.uav_states.xc_ned = self.R_U2D.dot(self.xc).tolist()
 
         # take only current voltage and rpm from the motor sensor rpm*780/14
