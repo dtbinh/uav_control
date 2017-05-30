@@ -97,15 +97,19 @@ class uav(object):
         self.odroid_sub = rospy.Subscriber('/drone_variable',error,self.odroid_callback)
         srv = Server(gainsConfig, self.config_callback)
         rospy.spin()
+
     def odroid_callback(self, msg):
         self.odroid_f = msg.force
         self.odroid_Moment = msg.Moment
         pub_cp = rospy.Publisher('moment_c',Point,queue_size=10)
         pub_py = rospy.Publisher('moment_py',Point,queue_size=10)
         pt_c = Point(msg.Moment.x,msg.Moment.y,msg.Moment.z)
+        pt_c = Point(msg.throttle[0],msg.throttle[1],msg.throttle[2])
         pt_py = Point(self.c_command[1],self.c_command[2],self.c_command[3])
+        pt_py = Point(self.uav_states.throttle[0],self.uav_states.throttle[1],self.uav_states.throttle[2])
         pub_cp.publish(pt_c)
         pub_py.publish(pt_py)
+
     def config_callback(self, config, level):
         rospy.loginfo('config update')
         #self.controller.kR = config['kR']
@@ -119,7 +123,7 @@ class uav(object):
         return config
 
     def v_update(self):
-        if len(self.v_array) < 20:
+        if len(self.v_array) < 10:
             self.v_array.append(self.v)
         else:
             self.v_array.pop(0)

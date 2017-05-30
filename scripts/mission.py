@@ -15,11 +15,17 @@ z_min = 0.35
 z_hover = 1.5
 v_up = 0.5
 x_v = [0,0,0]
+x_ship = [0,0,0]
 
 def mocap_sub(msg):
     global x_v
     x = msg.pose.position
     x_v = np.array([x.x,x.y,x.z])
+
+def mocap_sub_ship(msg):
+    global x_ship
+    x = msg.pose.position
+    x_ship = np.array([x.x,x.y,x.z])
 
 def get_key():
     for event in pygame.event.get():
@@ -30,6 +36,11 @@ def get_key():
             if event.key == pygame.K_f:
                 mission['Forward'] = True
                 print('Forward')
+            elif event.key == pygame.K_r:
+                mission['mode'] = 'reset'
+                print('Resetting the rosparams')
+                rospy.set_param('/odroid_node/MotorWarmup', False)
+                rospy.set_param('/odroid_node/Motor', False)
             elif event.key == pygame.K_s:
                 mission['mode'] = 'Simon'
                 print('Simon mission')
@@ -54,7 +65,7 @@ def get_key():
 
 
 pub = rospy.Publisher('xc', trajectory, queue_size= 10)
-print('mode: t: takeoff, l: land, h: hover, s: Simon, m: motor, w: warmup')
+print('mode: t: takeoff, l: land, h: hover, s: Simon, m: motor, w: warmup, r: reset')
 def mission_request():
     global x_v
     get_key()
@@ -134,6 +145,7 @@ def mission_request():
         print('Simon')
         t_total = 140
         t_cur = 0
+        t_init = time.time()
         x0 = x_v #[0,0,0]
         dictionnary = initialisation(x0[0],x0[1],x0[2])
         while True:
@@ -141,13 +153,13 @@ def mission_request():
             time.sleep(dt)
             cmd.header.stamp = rospy.get_rostime()
             height = z_hover - v_up*t_cur
-            d_pos = desired_pos(t_cur,x_v,dictionnary)
+            d_pos = desired_pos(t_cur,x_v,dictionnary, x_ship)
             cmd.xc = d_pos[0]
             cmd.xc_dot = d_pos[1]
             cmd.xc_2dot = d_pos[2]
             pub.publish(cmd)
             get_key()
-	    if x_v[2] < z_min and t > 5:
+	    if x_v[2] < z_min and t_cur > 5:
         	rospy.set_param('/odroid_node/Motor', False)
         mission['mode'] = 'wait'
         print('Simon mission complete')
@@ -164,6 +176,7 @@ if __name__ == '__main__':
     try:
         rospy.init_node('command_station', anonymous=True)
         uav_pose = rospy.Subscriber('/vicon/Maya/pose',PoseStamped, mocap_sub)
+        ship_pose = rospy.Subscriber('/vicon/ship/pose',PoseStamped, mocap_sub_ship)
         while True:
             mission_request()
     except rospy.ROSInterruptException:
