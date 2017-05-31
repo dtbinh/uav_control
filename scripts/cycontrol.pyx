@@ -7,6 +7,7 @@ cdef extern from 'src/controller.hpp':
         double kx, kv, kR, kW, m
         controller(double m,double dt, double* J, double* gains)
         void GeometricPositionController(double *x_in, double *v_in, double* R_in, double* W, double* xc, double* M_out)
+        double get_m()
         void get_Rc(double* R)
         void get_Rc_dot(double* R)
         void get_Rc_2dot(double* R)
@@ -30,6 +31,8 @@ cdef class c_control:
     def position_control(self, np.ndarray[double, ndim=1] x_in, np.ndarray[double, ndim=1] v_in, np.ndarray[double, ndim=1] R_in, np.ndarray[double, ndim=1] W, np.ndarray[double, ndim=1] xc, np.ndarray[double, ndim=1] M_out):
         self.c_control.GeometricPositionController(<double*> x_in.data, <double*> v_in.data,<double*> R_in.data, <double*> W.data, <double*> xc.data, <double*> M_out.data)
 
+    def m(self):
+        return self.c_control.get_m()
     @property
     def kx(self):
         return self.c_control.kx

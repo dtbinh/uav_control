@@ -21,7 +21,9 @@ public:
   controller(double m_in, double dt_in, double *J_in, double* gains);
 
   void GeometricPositionController(double* x_in, double* v_in, double* R_in, double* W_in, double* xc_in, double* M_out);
-
+  double get_m(){
+    return m;
+  }
   void get_Rc(double* R){
   Map<Matrix<double,3,3, RowMajor>>(R,3,3) = Rc;
   };

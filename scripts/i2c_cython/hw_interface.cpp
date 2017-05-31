@@ -921,6 +921,7 @@ static PyObject *__pyx_pf_12hw_interface_7pyMotor_10open_i2c(struct __pyx_obj_12
 static PyObject *__pyx_pf_12hw_interface_7pyMotor_12get_motor_address(struct __pyx_obj_12hw_interface_pyMotor *__pyx_v_self); /* proto */
 static PyObject *__pyx_pf_12hw_interface_7pyMotor_14pyTest(struct __pyx_obj_12hw_interface_pyMotor *__pyx_v_self, PyObject *__pyx_v_msg); /* proto */
 static PyObject *__pyx_tp_new_12hw_interface_pyMotor(PyTypeObject *t, PyObject *a, PyObject *k); /*proto*/
+static PyObject *__pyx_int_2;
 static PyObject *__pyx_int_3;
 static PyObject *__pyx_int_4;
 static PyObject *__pyx_int_5;
@@ -1333,7 +1334,8 @@ static PyObject *__pyx_pf_12hw_interface_7pyMotor_8motor_command(struct __pyx_ob
   PyObject *__pyx_t_7 = NULL;
   PyObject *__pyx_t_8 = NULL;
   PyObject *__pyx_t_9 = NULL;
-  int __pyx_t_10;
+  PyObject *__pyx_t_10 = NULL;
+  int __pyx_t_11;
   __Pyx_RefNannySetupContext("motor_command", 0);
 
   /* "hw_interface.pyx":26
@@ -1367,7 +1369,7 @@ static PyObject *__pyx_pf_12hw_interface_7pyMotor_8motor_command(struct __pyx_ob
  *         cdef sensor_out = []
  *         for i in range(4):             # <<<<<<<<<<<<<<
  *             #sensor_out.append([sensor_val[i*6]*0.1,sensor_val[i*6+5]*0.1,sensor_val[i*6+3]*780/14])
- *             sensor_out.append([sensor_val[i*6],sensor_val[i*6+5],sensor_val[i*6+3]])
+ *             # indexwise: Current, Max PWM, Temp, RPM, reserved, Voltage
  */
   __pyx_t_3 = __Pyx_PyObject_Call(__pyx_builtin_range, __pyx_tuple_, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 28, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
@@ -1414,61 +1416,72 @@ static PyObject *__pyx_pf_12hw_interface_7pyMotor_8motor_command(struct __pyx_ob
     __Pyx_XDECREF_SET(__pyx_v_i, __pyx_t_3);
     __pyx_t_3 = 0;
 
-    /* "hw_interface.pyx":30
- *         for i in range(4):
+    /* "hw_interface.pyx":31
  *             #sensor_out.append([sensor_val[i*6]*0.1,sensor_val[i*6+5]*0.1,sensor_val[i*6+3]*780/14])
- *             sensor_out.append([sensor_val[i*6],sensor_val[i*6+5],sensor_val[i*6+3]])             # <<<<<<<<<<<<<<
+ *             # indexwise: Current, Max PWM, Temp, RPM, reserved, Voltage
+ *             sensor_out.append([sensor_val[i*6],sensor_val[i*6+5],sensor_val[i*6+3],sensor_val[i*6+2]])             # <<<<<<<<<<<<<<
  *         return sensor_out
  *     def open_i2c(self):
  */
-    __pyx_t_3 = PyNumber_Multiply(__pyx_v_i, __pyx_int_6); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 30, __pyx_L1_error)
+    __pyx_t_3 = PyNumber_Multiply(__pyx_v_i, __pyx_int_6); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 31, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
-    __pyx_t_7 = PyObject_GetItem(__pyx_v_sensor_val, __pyx_t_3); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 30, __pyx_L1_error)
+    __pyx_t_7 = PyObject_GetItem(__pyx_v_sensor_val, __pyx_t_3); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 31, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __pyx_t_3 = PyNumber_Multiply(__pyx_v_i, __pyx_int_6); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 30, __pyx_L1_error)
+    __pyx_t_3 = PyNumber_Multiply(__pyx_v_i, __pyx_int_6); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 31, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
-    __pyx_t_8 = __Pyx_PyInt_AddObjC(__pyx_t_3, __pyx_int_5, 5, 0); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 30, __pyx_L1_error)
+    __pyx_t_8 = __Pyx_PyInt_AddObjC(__pyx_t_3, __pyx_int_5, 5, 0); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 31, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_8);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __pyx_t_3 = PyObject_GetItem(__pyx_v_sensor_val, __pyx_t_8); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 30, __pyx_L1_error)
+    __pyx_t_3 = PyObject_GetItem(__pyx_v_sensor_val, __pyx_t_8); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 31, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
-    __pyx_t_8 = PyNumber_Multiply(__pyx_v_i, __pyx_int_6); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 30, __pyx_L1_error)
+    __pyx_t_8 = PyNumber_Multiply(__pyx_v_i, __pyx_int_6); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 31, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_8);
-    __pyx_t_9 = __Pyx_PyInt_AddObjC(__pyx_t_8, __pyx_int_3, 3, 0); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 30, __pyx_L1_error)
+    __pyx_t_9 = __Pyx_PyInt_AddObjC(__pyx_t_8, __pyx_int_3, 3, 0); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 31, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_9);
     __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
-    __pyx_t_8 = PyObject_GetItem(__pyx_v_sensor_val, __pyx_t_9); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 30, __pyx_L1_error)
+    __pyx_t_8 = PyObject_GetItem(__pyx_v_sensor_val, __pyx_t_9); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 31, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_8);
     __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
-    __pyx_t_9 = PyList_New(3); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 30, __pyx_L1_error)
+    __pyx_t_9 = PyNumber_Multiply(__pyx_v_i, __pyx_int_6); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 31, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_9);
+    __pyx_t_10 = __Pyx_PyInt_AddObjC(__pyx_t_9, __pyx_int_2, 2, 0); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 31, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_10);
+    __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
+    __pyx_t_9 = PyObject_GetItem(__pyx_v_sensor_val, __pyx_t_10); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 31, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_9);
+    __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
+    __pyx_t_10 = PyList_New(4); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 31, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_10);
     __Pyx_GIVEREF(__pyx_t_7);
-    PyList_SET_ITEM(__pyx_t_9, 0, __pyx_t_7);
+    PyList_SET_ITEM(__pyx_t_10, 0, __pyx_t_7);
     __Pyx_GIVEREF(__pyx_t_3);
-    PyList_SET_ITEM(__pyx_t_9, 1, __pyx_t_3);
+    PyList_SET_ITEM(__pyx_t_10, 1, __pyx_t_3);
     __Pyx_GIVEREF(__pyx_t_8);
-    PyList_SET_ITEM(__pyx_t_9, 2, __pyx_t_8);
+    PyList_SET_ITEM(__pyx_t_10, 2, __pyx_t_8);
+    __Pyx_GIVEREF(__pyx_t_9);
+    PyList_SET_ITEM(__pyx_t_10, 3, __pyx_t_9);
     __pyx_t_7 = 0;
     __pyx_t_3 = 0;
     __pyx_t_8 = 0;
-    __pyx_t_10 = __Pyx_PyObject_Append(__pyx_v_sensor_out, __pyx_t_9); if (unlikely(__pyx_t_10 == -1)) __PYX_ERR(0, 30, __pyx_L1_error)
-    __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
+    __pyx_t_9 = 0;
+    __pyx_t_11 = __Pyx_PyObject_Append(__pyx_v_sensor_out, __pyx_t_10); if (unlikely(__pyx_t_11 == -1)) __PYX_ERR(0, 31, __pyx_L1_error)
+    __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
 
     /* "hw_interface.pyx":28
  *         cdef sensor_val = self.thisptr.motor_command(throttle, motor_on)
  *         cdef sensor_out = []
  *         for i in range(4):             # <<<<<<<<<<<<<<
  *             #sensor_out.append([sensor_val[i*6]*0.1,sensor_val[i*6+5]*0.1,sensor_val[i*6+3]*780/14])
- *             sensor_out.append([sensor_val[i*6],sensor_val[i*6+5],sensor_val[i*6+3]])
+ *             # indexwise: Current, Max PWM, Temp, RPM, reserved, Voltage
  */
   }
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
 
-  /* "hw_interface.pyx":31
- *             #sensor_out.append([sensor_val[i*6]*0.1,sensor_val[i*6+5]*0.1,sensor_val[i*6+3]*780/14])
- *             sensor_out.append([sensor_val[i*6],sensor_val[i*6+5],sensor_val[i*6+3]])
+  /* "hw_interface.pyx":32
+ *             # indexwise: Current, Max PWM, Temp, RPM, reserved, Voltage
+ *             sensor_out.append([sensor_val[i*6],sensor_val[i*6+5],sensor_val[i*6+3],sensor_val[i*6+2]])
  *         return sensor_out             # <<<<<<<<<<<<<<
  *     def open_i2c(self):
  *         self.thisptr.open_i2c()
@@ -1493,6 +1506,7 @@ static PyObject *__pyx_pf_12hw_interface_7pyMotor_8motor_command(struct __pyx_ob
   __Pyx_XDECREF(__pyx_t_7);
   __Pyx_XDECREF(__pyx_t_8);
   __Pyx_XDECREF(__pyx_t_9);
+  __Pyx_XDECREF(__pyx_t_10);
   __Pyx_AddTraceback("hw_interface.pyMotor.motor_command", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
   __pyx_L0:;
@@ -1504,8 +1518,8 @@ static PyObject *__pyx_pf_12hw_interface_7pyMotor_8motor_command(struct __pyx_ob
   return __pyx_r;
 }
 
-/* "hw_interface.pyx":32
- *             sensor_out.append([sensor_val[i*6],sensor_val[i*6+5],sensor_val[i*6+3]])
+/* "hw_interface.pyx":33
+ *             sensor_out.append([sensor_val[i*6],sensor_val[i*6+5],sensor_val[i*6+3],sensor_val[i*6+2]])
  *         return sensor_out
  *     def open_i2c(self):             # <<<<<<<<<<<<<<
  *         self.thisptr.open_i2c()
@@ -1530,7 +1544,7 @@ static PyObject *__pyx_pf_12hw_interface_7pyMotor_10open_i2c(struct __pyx_obj_12
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("open_i2c", 0);
 
-  /* "hw_interface.pyx":33
+  /* "hw_interface.pyx":34
  *         return sensor_out
  *     def open_i2c(self):
  *         self.thisptr.open_i2c()             # <<<<<<<<<<<<<<
@@ -1539,8 +1553,8 @@ static PyObject *__pyx_pf_12hw_interface_7pyMotor_10open_i2c(struct __pyx_obj_12
  */
   __pyx_v_self->thisptr->open_i2c();
 
-  /* "hw_interface.pyx":32
- *             sensor_out.append([sensor_val[i*6],sensor_val[i*6+5],sensor_val[i*6+3]])
+  /* "hw_interface.pyx":33
+ *             sensor_out.append([sensor_val[i*6],sensor_val[i*6+5],sensor_val[i*6+3],sensor_val[i*6+2]])
  *         return sensor_out
  *     def open_i2c(self):             # <<<<<<<<<<<<<<
  *         self.thisptr.open_i2c()
@@ -1554,7 +1568,7 @@ static PyObject *__pyx_pf_12hw_interface_7pyMotor_10open_i2c(struct __pyx_obj_12
   return __pyx_r;
 }
 
-/* "hw_interface.pyx":34
+/* "hw_interface.pyx":35
  *     def open_i2c(self):
  *         self.thisptr.open_i2c()
  *     def get_motor_address(self):             # <<<<<<<<<<<<<<
@@ -1581,7 +1595,7 @@ static PyObject *__pyx_pf_12hw_interface_7pyMotor_12get_motor_address(struct __p
   PyObject *__pyx_t_1 = NULL;
   __Pyx_RefNannySetupContext("get_motor_address", 0);
 
-  /* "hw_interface.pyx":35
+  /* "hw_interface.pyx":36
  *         self.thisptr.open_i2c()
  *     def get_motor_address(self):
  *         return self.thisptr.get_motor_address()             # <<<<<<<<<<<<<<
@@ -1589,13 +1603,13 @@ static PyObject *__pyx_pf_12hw_interface_7pyMotor_12get_motor_address(struct __p
  *         return self.thisptr.test(msg)
  */
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __pyx_convert_vector_to_py_int(__pyx_v_self->thisptr->get_motor_address()); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 35, __pyx_L1_error)
+  __pyx_t_1 = __pyx_convert_vector_to_py_int(__pyx_v_self->thisptr->get_motor_address()); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 36, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
   goto __pyx_L0;
 
-  /* "hw_interface.pyx":34
+  /* "hw_interface.pyx":35
  *     def open_i2c(self):
  *         self.thisptr.open_i2c()
  *     def get_motor_address(self):             # <<<<<<<<<<<<<<
@@ -1614,7 +1628,7 @@ static PyObject *__pyx_pf_12hw_interface_7pyMotor_12get_motor_address(struct __p
   return __pyx_r;
 }
 
-/* "hw_interface.pyx":36
+/* "hw_interface.pyx":37
  *     def get_motor_address(self):
  *         return self.thisptr.get_motor_address()
  *     def pyTest(self,msg):             # <<<<<<<<<<<<<<
@@ -1641,20 +1655,20 @@ static PyObject *__pyx_pf_12hw_interface_7pyMotor_14pyTest(struct __pyx_obj_12hw
   PyObject *__pyx_t_2 = NULL;
   __Pyx_RefNannySetupContext("pyTest", 0);
 
-  /* "hw_interface.pyx":37
+  /* "hw_interface.pyx":38
  *         return self.thisptr.get_motor_address()
  *     def pyTest(self,msg):
  *         return self.thisptr.test(msg)             # <<<<<<<<<<<<<<
  */
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __pyx_convert_vector_from_py_int(__pyx_v_msg); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 37, __pyx_L1_error)
-  __pyx_t_2 = __pyx_convert_vector_to_py_int(__pyx_v_self->thisptr->test(__pyx_t_1)); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 37, __pyx_L1_error)
+  __pyx_t_1 = __pyx_convert_vector_from_py_int(__pyx_v_msg); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 38, __pyx_L1_error)
+  __pyx_t_2 = __pyx_convert_vector_to_py_int(__pyx_v_self->thisptr->test(__pyx_t_1)); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 38, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __pyx_r = __pyx_t_2;
   __pyx_t_2 = 0;
   goto __pyx_L0;
 
-  /* "hw_interface.pyx":36
+  /* "hw_interface.pyx":37
  *     def get_motor_address(self):
  *         return self.thisptr.get_motor_address()
  *     def pyTest(self,msg):             # <<<<<<<<<<<<<<
@@ -2000,7 +2014,7 @@ static int __Pyx_InitCachedConstants(void) {
  *         cdef sensor_out = []
  *         for i in range(4):             # <<<<<<<<<<<<<<
  *             #sensor_out.append([sensor_val[i*6]*0.1,sensor_val[i*6+5]*0.1,sensor_val[i*6+3]*780/14])
- *             sensor_out.append([sensor_val[i*6],sensor_val[i*6+5],sensor_val[i*6+3]])
+ *             # indexwise: Current, Max PWM, Temp, RPM, reserved, Voltage
  */
   __pyx_tuple_ = PyTuple_Pack(1, __pyx_int_4); if (unlikely(!__pyx_tuple_)) __PYX_ERR(0, 28, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple_);
@@ -2014,6 +2028,7 @@ static int __Pyx_InitCachedConstants(void) {
 
 static int __Pyx_InitGlobals(void) {
   if (__Pyx_InitStrings(__pyx_string_tab) < 0) __PYX_ERR(0, 1, __pyx_L1_error);
+  __pyx_int_2 = PyInt_FromLong(2); if (unlikely(!__pyx_int_2)) __PYX_ERR(0, 1, __pyx_L1_error)
   __pyx_int_3 = PyInt_FromLong(3); if (unlikely(!__pyx_int_3)) __PYX_ERR(0, 1, __pyx_L1_error)
   __pyx_int_4 = PyInt_FromLong(4); if (unlikely(!__pyx_int_4)) __PYX_ERR(0, 1, __pyx_L1_error)
   __pyx_int_5 = PyInt_FromLong(5); if (unlikely(!__pyx_int_5)) __PYX_ERR(0, 1, __pyx_L1_error)

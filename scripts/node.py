@@ -108,7 +108,7 @@ class uav(object):
         pt_c = Point(msg.Moment.x,msg.Moment.y,msg.Moment.z)
         pt_c = Point(msg.throttle[0],msg.throttle[1],msg.throttle[2])
         pt_py = Point(self.c_command[1],self.c_command[2],self.c_command[3])
-        pt_py = Point(self.uav_states.throttle[0],self.uav_states.throttle[1],self.uav_states.throttle[2])
+        pt_py = Point(self.throttle[0],self.throttle[1],self.throttle[2])
         pub_cp.publish(pt_c)
         pub_py.publish(pt_py)
 
@@ -210,11 +210,11 @@ class uav(object):
         command = [val if val > 0 else 0 for val in command]
         command = np.array([val if val < 6 else 6 for val in command])
         self.uav_states.f_motor_sat = command.tolist()
-        throttle = np.rint(1./0.03*(command+0.37))
-        self.uav_states.throttle = throttle.tolist()
+        self.throttle = np.rint(1./0.03*(command+0.37))
+        self.uav_states.throttle = self.throttle.tolist()
         motor_on = True
         if self.motor_address is not None and not self.simulation:
-            self.uav_states.motor_power = np.array(self.motor.motor_command(throttle,True)).flatten().tolist()
+            self.uav_states.motor_power = np.array(self.motor.motor_command(self.throttle,True)).flatten().tolist()
             pass
 
 
@@ -240,9 +240,11 @@ class uav(object):
         #self.uav_states.b1d = self.c_controller.get_b1d()
         self.uav_states.force = self.c_command[0]
         self.uav_states.moment = self.c_command[1:].tolist()
-        temp = np.zeros(3)
-        self.c_controller.get_Wc(temp)
-        self.uav_states.Wc = temp
+
+        Wc_ = np.zeros(3)
+        self.c_controller.get_Wc(Wc_)
+        self.uav_states.Wc = Wc_
+
         b1d = np.zeros(3)
         self.c_controller.get_b1d(b1d)
         self.uav_states.b1d = b1d

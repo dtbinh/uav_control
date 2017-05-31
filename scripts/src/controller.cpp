@@ -5,6 +5,7 @@ using namespace std;
 
 controller::controller(double m_in,double dt_in, double *J_in, double* gains){
     m = m_in;
+    g = 9.81;
     del_t = dt_in;
     J = Map<Matrix<double,3,3,RowMajor>>(J_in);
     kx = gains[0];
