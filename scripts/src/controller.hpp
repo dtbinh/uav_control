@@ -8,11 +8,7 @@ class controller
 {
 public:
   double kx,kv,kiX,kR,kW,kiR, eiR_sat, eiX_sat;
-  double cR,cX;
-  double m = 1.4;
-  double g = 9.81;
-  double f,fdot,nA,nLd2;
-  double del_t = 0.01;
+  double cR,cX, m, g, f,fdot,nA,nLd2,del_t;
   Vector3d e3;
   Matrix3d J,R;
   Matrix<double,8,3> xc_all;

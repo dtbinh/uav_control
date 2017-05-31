@@ -19,7 +19,7 @@ from uav_control.msg import states
 from uav_control.msg import trajectory
 from dynamic_reconfigure.server import Server
 from uav_control.cfg import gainsConfig
-import thread
+import threading
 import cython_control
 from odroid.msg import error
 
@@ -31,7 +31,7 @@ class uav(object):
         self.uav_name = rospy.get_param('name/uav')
         self.motor_address = np.fromstring(rospy.get_param('/'+self.uav_name+'/port/i2c'), dtype=int,sep=',')
         self._dt = rospy.get_param('controller/dt')
-	self.m = rospy.get_param('controller/m')
+        self.m = rospy.get_param('controller/m')
         # initialization of ROS node
         rospy.init_node(self.uav_name)
         self.tf = tf.TransformerROS(True,rospy.Duration(10.0))
@@ -64,7 +64,7 @@ class uav(object):
         #self.controller.kR, self.controller.kW = rospy.get_param('controller/gain/att/kp'), rospy.get_param('controller/gain/att/kd')
         #self.controller.kR = rospy.get_param('controller/kR')
         #self.controller.kx = rospy.get_param('controller/kx')
-        gains = np.array([6.5,3.,0.,0.5,0.1,0.0],np.double)
+        gains = np.fromstring(rospy.get_param('controller/gains'),dtype=np.double,sep=',')
         self.c_controller = cython_control.c_control(self.m,self._dt,J.flatten(),gains)
         self.F = None
         self.M = None
@@ -92,6 +92,8 @@ class uav(object):
         self.uav_pose = rospy.Subscriber('/vicon/'+self.uav_name+'/pose',PoseStamped, self.mocap_sub)
         self.trajectory_sub = rospy.Subscriber('/xc', trajectory, self.trajectory_sub)
         self.v_array = []
+
+        self.lock = threading.Lock()
         #rospy.wait_for_service('/gain_tuning')
         #self.client = dynamic_reconfigure.client.Client('/gain_config', timeout=30, config_callback=self.config_callback)
         self.odroid_sub = rospy.Subscriber('/drone_variable',error,self.odroid_callback)
@@ -170,7 +172,6 @@ class uav(object):
         acc = msg.linear_acceleration
         self.linear_acceleration = np.array([acc.x,acc.y,acc.z])
         self.linear_velocity = self.linear_acceleration*self._dt
-        self.imu_q = msg.orientation
         orient = msg.orientation
         self.orientation = np.array([orient.x,orient.y,orient.z,orient.w])
         self.euler_angle = tf.transformations.euler_from_quaternion(self.orientation)
@@ -178,15 +179,17 @@ class uav(object):
         self.R_imu = self.tf.fromTranslationRotation((0,0,0), self.orientation)[:3,:3]
         self.uav_states.R_imu = self.R_imu.flatten().tolist()
         self.orientation = tf.transformations.quaternion_from_euler(euler_angle[0],euler_angle[1],euler_angle[2])
-        self.W = np.array([w.x,w.y,w.z])
+        with self.lock:
+            self.W = np.array([w.x,w.y,w.z])
+            self.imu_q = msg.orientation
         self.uav_states.W = self.W.tolist()
         #self.run_ukf()
-        self.control()
         #br = tf.TransformBroadcaster()
         #br.sendTransform((0,0,0), (1,0,0,0),
         #        msg.header.stamp,
         #        'imu',
         #        'Jetson')
+        self.control()
         self.publish_states()
 
     def control(self):
