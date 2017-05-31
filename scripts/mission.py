@@ -8,18 +8,50 @@ from trajectory_tracking_FOR_HADWARE import desired_pos, initialisation
 from geometry_msgs.msg import PoseStamped
 import numpy as np
 pygame.init()
-pygame.display.set_mode((300,300))
+black = (0,0,0)
+white = (255,255,255)
+red = (255,0,0)
+clock = pygame.time.Clock()
+
+
+display_width = 400
+display_height = 300
+window = pygame.display.set_mode((display_width,display_height))
+window.fill(white)
+pygame.display.update()
+
+def text_objects(text, font):
+    textSurface = font.render(text, True, black)
+    return textSurface, textSurface.get_rect()
+
+def message_display(text):
+    largeText = pygame.font.Font('freesansbold.ttf',40)
+    TextSurf, TextRect = text_objects(text, largeText)
+    TextRect.center = ((display_width/2),(display_height/2))
+    window.blit(TextSurf, TextRect)
+    pygame.display.update()
+
+def window_update(msg):
+    window.fill(white)
+    message_display(msg)
+
 
 mission =  {'mode':'init','motor':False,'warmup':False}
 z_min = 0.35
 z_hover = 1.5
 v_up = 0.5
 x_v = [0,0,0]
+x_ship = [0,0,0]
 
 def mocap_sub(msg):
     global x_v
     x = msg.pose.position
     x_v = np.array([x.x,x.y,x.z])
+
+def mocap_sub_ship(msg):
+    global x_ship
+    x = msg.pose.position
+    x_ship = np.array([x.x,x.y,x.z])
 
 def get_key():
     for event in pygame.event.get():
@@ -27,34 +59,39 @@ def get_key():
             rospy.set_param('/odroid_node/Motor', False)
             sys.exit()
         if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_f:
-                mission['Forward'] = True
-                print('Forward')
+            if event.key == pygame.K_s:
+                mission['mode'] = 'spin'
+                window_update('Spin!')
+            elif event.key == pygame.K_r:
+                mission['mode'] = 'reset'
+                window_update('Resetting the rosparams')
+                rospy.set_param('/odroid_node/MotorWarmup', False)
+                rospy.set_param('/odroid_node/Motor', False)
             elif event.key == pygame.K_s:
                 mission['mode'] = 'Simon'
-                print('Simon mission')
+                window_update('Simon mission')
             elif event.key == pygame.K_q:
                 rospy.set_param('/odroid_node/Motor', False)
                 sys.exit()
             elif event.key == pygame.K_t:
                 mission['mode'] = 'takeoff'
-                print('takeoff')
+                window_update('Take off')
             elif event.key == pygame.K_l:
                 mission['mode'] = 'land'
-                print('Landing')
+                window_update('Landing')
             elif event.key == pygame.K_h:
                 mission['mode'] = 'hover'
-                print('Hovering at origin')
+                window_update('Hovering at origin')
             elif event.key == pygame.K_m:
                 mission['motor'] = not mission['motor']
-                print('Motor on')
+                window_update('Motor on')
             elif event.key == pygame.K_w:
                 mission['warmup'] = not mission['warmup']
-                print('Motor warmup')
+                window_update('Motor warmup')
 
 
 pub = rospy.Publisher('xc', trajectory, queue_size= 10)
-print('mode: t: takeoff, l: land, h: hover, s: Simon, m: motor, w: warmup')
+print('mode: t: takeoff, l: land, h: hover, s: Simon, m: motor, w: warmup, r: reset')
 def mission_request():
     global x_v
     get_key()
@@ -124,6 +161,9 @@ def mission_request():
         rospy.set_param('/odroid_node/Motor', False)
         mission['mode'] = 'wait'
         print('landing complete')
+    elif mission['mode'] == 'spin':
+        # TODO
+        pass
 
     elif mission['mode'] == 'Simon':
         rospy.set_param('/odroid_node/Motor', True)
@@ -134,6 +174,7 @@ def mission_request():
         print('Simon')
         t_total = 140
         t_cur = 0
+        t_init = time.time()
         x0 = x_v #[0,0,0]
         dictionnary = initialisation(x0[0],x0[1],x0[2])
         while True:
@@ -141,14 +182,14 @@ def mission_request():
             time.sleep(dt)
             cmd.header.stamp = rospy.get_rostime()
             height = z_hover - v_up*t_cur
-            d_pos = desired_pos(t_cur,x_v,dictionnary)
+            d_pos = desired_pos(t_cur,x_v,dictionnary, x_ship)
             cmd.xc = d_pos[0]
             cmd.xc_dot = d_pos[1]
             cmd.xc_2dot = d_pos[2]
             pub.publish(cmd)
             get_key()
-	    if x_v[2] < z_min and t > 5:
-        	rospy.set_param('/odroid_node/Motor', False)
+            if x_v[2] < z_min and t_cur > 5:
+                rospy.set_param('/odroid_node/Motor', False)
         mission['mode'] = 'wait'
         print('Simon mission complete')
 
@@ -164,6 +205,7 @@ if __name__ == '__main__':
     try:
         rospy.init_node('command_station', anonymous=True)
         uav_pose = rospy.Subscriber('/vicon/Maya/pose',PoseStamped, mocap_sub)
+        ship_pose = rospy.Subscriber('/vicon/ship/pose',PoseStamped, mocap_sub_ship)
         while True:
             mission_request()
     except rospy.ROSInterruptException:
