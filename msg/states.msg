@@ -59,4 +59,4 @@ float32[3] gain_position
 float32[3] gain_attitude
 
 # sensor feed back from the motor
-uint8[12] motor_power
+uint8[16] motor_power
