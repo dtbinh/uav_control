@@ -8,7 +8,6 @@ Created on Mon May 29 11:18:43 2017
 
 
 from __future__ import division
-import pyximport; pyximport.install()
 # import controller here
 import numpy as np
 import sys
