@@ -106,6 +106,7 @@ def mission_request():
             cmd.xc = desired_pos[0]
             cmd.xc_dot = desired_pos[1]
             cmd.xc_2dot = desired_pos[2]
+            cmd.b1 = desired_pos[3]
             pub.publish(cmd)
             get_key()
         mission['mode'] = 'wait'
