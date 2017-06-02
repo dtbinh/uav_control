@@ -1,7 +1,6 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 from __future__ import division
-import pyximport; pyximport.install()
 # import controller here
 import numpy as np
 import numpy.linalg as la
