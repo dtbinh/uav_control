@@ -21,7 +21,8 @@ from dynamic_reconfigure.server import Server
 from uav_control.cfg import gainsConfig
 import threading
 import cython_control
-from odroid.msg import error
+#from odroid.msg import err
+from multiprocessing import Process, Lock
 
 class uav(object):
 
@@ -80,7 +81,8 @@ class uav(object):
                 time.sleep(0.01)
         #self.ukf = ukf_uav.UnscentedKalmanFilter(12,6,1)
         #self.unscented_kalman_filter()
-        self.pub_states = rospy.Publisher('uav_states', states, queue_size=10)
+        self.pub_states = rospy.Publisher('uav_states', states, queue_sora
+                ze=10)
         self.uav_states = states()
         #self.uav_states.xc = self.x_c
         self.tf_subscriber = tf.TransformListener()
@@ -93,12 +95,16 @@ class uav(object):
         self.trajectory_sub = rospy.Subscriber('/xc', trajectory, self.trajectory_sub)
         self.v_array = []
 
+        pub_state = Process(target=self.publish_states)
+        pub_state.start()
+
         self.lock = threading.Lock()
         #rospy.wait_for_service('/gain_tuning')
         #self.client = dynamic_reconfigure.client.Client('/gain_config', timeout=30, config_callback=self.config_callback)
-        self.odroid_sub = rospy.Subscriber('/drone_variable',error,self.odroid_callback)
+        #self.odroid_sub = rospy.Subscriber('/drone_variable',error ,self.odroid_callback)
         srv = Server(gainsConfig, self.config_callback)
         rospy.spin()
+        pub_state.join()
 
     def odroid_callback(self, msg):
         self.odroid_f = msg.force
