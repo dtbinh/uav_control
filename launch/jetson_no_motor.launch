@@ -1,6 +1,6 @@
 <launch>
     <group ns="Jetson">
-    <include file="$(find imu_vn_100)/launch/vn_100_cont.launch" />
+    <include file="$(find uav_control)/launch/imu_jetson.launch" />
     <rosparam file="$(find uav_control)/params/jetson.yaml" />
     <param name="simulation" value="True" />
     <node name="Jetson" pkg="uav_control" type="node.py" respawn="false" output="screen">
