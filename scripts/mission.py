@@ -238,8 +238,8 @@ def mission_request():
             d_pos = desired_pos(t_cur,x_v,dictionnary, x_ship)
             #cmd.b1 = d_pos[3]
             cmd.xc = d_pos[0]
-            #cmd.xc_dot = d_pos[1]
-            #cmd.xc_2dot = d_pos[2]
+            cmd.xc_dot = d_pos[1]
+            cmd.xc_2dot = d_pos[2]
             pub.publish(cmd)
             get_key()
 	    if x_v[2] < z_min and t_cur > 5:

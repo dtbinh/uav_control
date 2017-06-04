@@ -1,25 +1,25 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 """
-Created on Mon May 29 11:18:43 2017
+Created on Fri Jun  2 14:40:46 2017
 
 @author: simonlibine
 """
 
-
 from __future__ import division
+import pyximport; pyximport.install()
 # import controller here
 import numpy as np
 import sys
 #import TrajectoryPython
 def initialisation(a, b, c):
     x0 = [a, b, c]
-    x0_ship = [-3, -1.8, 0] #a changer dans la fonction shipPosition
-    v_ship = [(3 + 1.8)/90 , (3 + 1.8)/90, 0]
+    x0_ship = [-2, -1.4, 0] #a changer dans la fonction shipPosition
+    v_ship = [0.5 , 0.5, 0]
     dictionnary ={'landingCompleted' : 0, 'phase': np.array([])}
     dictionnary['turnValues'] = np.array([-1, -1, -1, -1, -1, -1, -1, -1, 1])
-    zFirstPhases = 1.7
-    tolerateAltitudeError = 0.05
+    zFirstPhases = 1
+    tolerateAltitudeError = 0.15
     if zFirstPhases + tolerateAltitudeError <= x0[2] or x0[2] <= zFirstPhases - tolerateAltitudeError:
     #   startAltitudeValues = [status, x_droneStart, y_droneStart, z_droneStart, velocity];
         startAltitudeValues = np.array([1, x0[0], x0[1], x0[2], 0., 0., 0.])
@@ -78,8 +78,8 @@ def ShipPosition(t, dictionnary):
     shipVelocityGlobal = dictionnary['shipVelocityGlobal']
 
 #     initialisation of the ship movement variables
-    x0_ship = -3
-    y0_ship = -1.8
+    x0_ship = -2
+    y0_ship = -1.4
     z0_ship = 0
 
     a_ship = shipVelocityGlobal[0] # a_ship = 0 -> y = cst
@@ -110,7 +110,7 @@ def UpdatePositionShip_list(t, shipPosition, dictionnary):
 
     """
 
-    sizeList = 50;# number of the last ship positions in the memory
+    sizeList = 200;# number of the last ship positions in the memory
 
     positionShip_list = dictionnary['positionShip_list']
     shipPosition = np.array([[shipPosition[0]], [shipPosition[1]], [shipPosition[2]], [t]])
@@ -124,10 +124,10 @@ def UpdatePositionShip_list(t, shipPosition, dictionnary):
             positionShip_list[2,k + 1] = positionShip_list[2,k];
             positionShip_list[3,k + 1] = positionShip_list[3,k];
 
-    positionShip_list[0,-1] = shipPosition[0];
-    positionShip_list[1,-1] = shipPosition[1];
-    positionShip_list[2,-1] = shipPosition[2];
-    positionShip_list[3,-1] = shipPosition[3];
+        positionShip_list[0,-1] = shipPosition[0];
+        positionShip_list[1,-1] = shipPosition[1];
+        positionShip_list[2,-1] = shipPosition[2];
+        positionShip_list[3,-1] = shipPosition[3];
 
     dictionnary['positionShip_list'] = positionShip_list
 
@@ -189,16 +189,22 @@ def ShipDirection(dictionnary):
 def ShipVelocity(dictionnary):
     """ Documentation :
         This function returns the velocity of the ship
+
     """
+
     positionShip_list = dictionnary['positionShip_list']
 #    refreshTime = dictionnary['refreshTime']
 #    sizeList = positionShip_list.shape[1]
 
-    deltaTime = positionShip_list[3,-1] - positionShip_list[3,0]
-
-    v_x = (positionShip_list[0,-1] - positionShip_list[0,0])/(deltaTime)
-    v_y = (positionShip_list[1,-1] - positionShip_list[1,0])/(deltaTime)
-    v_z = 0
+    deltaTime = positionShip_list[3,-1] - positionShip_list[3,1]
+    if deltaTime != 0:
+        v_x = (positionShip_list[0,-1] - positionShip_list[0,1])/(deltaTime)
+        v_y = (positionShip_list[1,-1] - positionShip_list[1,1])/(deltaTime)
+        v_z = 0
+    else:
+        v_x = 0.1
+        v_y = 0.1
+        v_z = 0
 
     shipVelocity = [v_x, v_y, v_z]
 
@@ -397,18 +403,20 @@ def TrajectoryCreation(t, x_drone, y_drone, z_drone, dictionnary):
 
 #    %%%%%%%%%%%%%%% ELEMENTS FOR THE TRAJECTORY %%%%%%%%%%%%%%%
     r = 0.8 # security area
-    zFirstPhases = 1.7
+    zFirstPhases = 1
     zLanding = 1 # altitude of the landing
     landingCompletedAlt = 0.15
     Vmax_phase1 = 0.5
     Vmax_phase2 = 0.5
-    lim_acceleration_diff = 0.02
-    accelerationDuration = 2
+    lim_acceleration_diff = 0.05
+    accelerationDuration = 1
     sizeErrorList = 40 # time in refreshTime which the drone has to wait befor going from Phase 3 to Phase 4
-    toleratePositionError = 0.20
-    tolerateAltitudeError = 0.05
+    toleratePositionError = 0.25
+    toleratePositionError_changePhase = 0.40
+    tolerateAltitudeError = 0.15
 #    velocityFasterShip = np.min([1 + 0.8/np.max(np.abs(shipVelocity)), 1.8])
-    velocityFasterShip = 5#np.max([1 + 0.8/np.max(np.abs(shipVelocity)), 2])
+    velocityFasterShip = 3#np.max([1 + 0.8/np.max(np.abs(shipVelocity)), 2])
+    maxVelocityDiff = 1
 
 #    %%%%%%%%%%%%%%% RELATIVE POSITION OF THE SHIP TO THE DRONE %%%%%%%%%%%%%%%
     distance_shipDrone2D = np.sqrt((x_drone - shipPosition[0])**2+(y_drone - shipPosition[1])**2) # distance between the ship and the drone in 2D (altitude does not mater)
@@ -463,6 +471,7 @@ def TrajectoryCreation(t, x_drone, y_drone, z_drone, dictionnary):
                     if landingCompleted == 0:
                         #% stop engines
                         print('Landing completed, STOP ENGINES t = ' + repr(t))
+                        print('Final position of the ship = ' + repr(shipPosition))
                     landingCompleted = 1
 
             elif phase == 4 or phase == 41 or phase == 42: # The drone has to go to Point D
@@ -470,8 +479,15 @@ def TrajectoryCreation(t, x_drone, y_drone, z_drone, dictionnary):
 
 
                     #    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% PHASE 42 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-                    if distance_shipDrone2D >= toleratePositionError and phase != 41:
+                    if distance_shipDrone2D >= toleratePositionError_changePhase and phase != 41:
                         newPhase = 42
+                        if abs(shipVelocity[0]) >= abs(shipVelocity[1]):
+                            if abs(velocityFasterShip*shipVelocity[0]) >= maxVelocityDiff:
+                                velocityFasterShip = abs((shipVelocity[0] + maxVelocityDiff)/shipVelocity[0])
+                        else:
+                            if abs(velocityFasterShip*shipVelocity[1]) >= maxVelocityDiff:
+                                velocityFasterShip = abs((shipVelocity[1] + maxVelocityDiff)/shipVelocity[1])
+
                         Vuav = np.array([velocityFasterShip*shipVelocity[0], velocityFasterShip*shipVelocity[1]])
                         Vdrone = np.array([Vuav[0], Vuav[1], 0])
 
@@ -494,7 +510,7 @@ def TrajectoryCreation(t, x_drone, y_drone, z_drone, dictionnary):
                             for k in range(errorPhase4_list.shape[0]):
                                 if errorPhase4_list[k] <= toleratePositionError:
                                     nError = nError + 1;
-                            if nError == sizeErrorList: # the drone is on Point D for ? seconds, the Landing mode can start
+                            if nError == sizeErrorList and accelerationValues[0] == 0 : # the drone is on Point D for ? seconds, the Landing mode can start
                                 newPhase = 5 # landing
 
 
@@ -504,49 +520,49 @@ def TrajectoryCreation(t, x_drone, y_drone, z_drone, dictionnary):
                     Vdrone = np.array([Vuav[0], Vuav[1], 0])
                     newPhase = 4
 
-            elif (distance_shipDrone2D >= distance_droneCheckpoint2D) or (phase == 3) or (phase == 31): # the drone is in Phase 3
-
-
-#    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% PHASE 3 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-                if distance_droneCheckpoint2D >= toleratePositionError:
-#                    p = 'distance_droneCheckpoint2D = ' + repr(distance_droneCheckpoint2D)
-#                    print(p)
-#                    p = 'distance_droneShipDirection = ' + repr(distance_droneShipDirection)
-#                    print(p)
-                    newPhase = 3
-                    Vuav = np.array([velocityFasterShip*shipVelocity[0], velocityFasterShip*shipVelocity[1]])
-                    Vdrone = np.array([Vuav[0], Vuav[1], 0])
-#                    print(Vdrone)
-
-                    if phase == 31:
-                        newPhase = 31
-                        Vuav = np.array([shipVelocity[0], shipVelocity[1]])
-                        Vdrone = np.array([Vuav[0], Vuav[1], 0])
-
-
-#    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% PHASE 31 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-                else:
-#                    print(distance_droneCheckpoint2D)
-                    newPhase = 31
-                    Vuav = np.array([shipVelocity[0], shipVelocity[1]])
-                    Vdrone = np.array([Vuav[0], Vuav[1], 0])
-                    errorCheckpoint = np.sqrt((checkpoint[0]-x_drone)**2 + (checkpoint[1]-y_drone)**2 + (zCheckPoint-z_drone)**2);
-                    errorCheckpoint = np.array([errorCheckpoint])
-                    if errorCheckpoint_list.shape[0] < sizeErrorList:
-                        errorCheckpoint_list = np.hstack((errorCheckpoint_list, errorCheckpoint))
-                    else:
-                        for k in range(sizeErrorList - 2):
-                            errorCheckpoint_list[k] = errorCheckpoint_list[k+1]
-                        errorCheckpoint_list[-1] = errorCheckpoint
-                        nError = 0
-                        for k in range(errorCheckpoint_list.shape[0]):
-                            if errorCheckpoint_list[k] <= toleratePositionError: # acceptable distance for holding position
-                                nError = nError + 1
-                        if nError == sizeErrorList:
-                            newPhase = 4 # the drone starts Phase 4
-                            Vuav = np.array([shipVelocity[0], shipVelocity[1]])
-                            Vdrone = np.array([Vuav[0], Vuav[1], 0])
-
+#            elif (distance_shipDrone2D >= distance_droneCheckpoint2D) or (phase == 3) or (phase == 31): # the drone is in Phase 3
+#
+#
+##    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% PHASE 3 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#                if distance_droneCheckpoint2D >= toleratePositionError_changePhase:
+##                    p = 'distance_droneCheckpoint2D = ' + repr(distance_droneCheckpoint2D)
+##                    print(p)
+##                    p = 'distance_droneShipDirection = ' + repr(distance_droneShipDirection)
+##                    print(p)
+#                    newPhase = 3
+#                    Vuav = np.array([velocityFasterShip*shipVelocity[0], velocityFasterShip*shipVelocity[1]])
+#                    Vdrone = np.array([Vuav[0], Vuav[1], 0])
+##                    print(Vdrone)
+#
+#                    if phase == 31:
+#                        newPhase = 31
+#                        Vuav = np.array([shipVelocity[0], shipVelocity[1]])
+#                        Vdrone = np.array([Vuav[0], Vuav[1], 0])
+#
+#
+##    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% PHASE 31 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#                else:
+##                    print(distance_droneCheckpoint2D)
+#                    newPhase = 31
+#                    Vuav = np.array([shipVelocity[0], shipVelocity[1]])
+#                    Vdrone = np.array([Vuav[0], Vuav[1], 0])
+#                    errorCheckpoint = np.sqrt((checkpoint[0]-x_drone)**2 + (checkpoint[1]-y_drone)**2 + (zCheckPoint-z_drone)**2);
+#                    errorCheckpoint = np.array([errorCheckpoint])
+#                    if errorCheckpoint_list.shape[0] < sizeErrorList:
+#                        errorCheckpoint_list = np.hstack((errorCheckpoint_list, errorCheckpoint))
+#                    else:
+#                        for k in range(sizeErrorList - 2):
+#                            errorCheckpoint_list[k] = errorCheckpoint_list[k+1]
+#                        errorCheckpoint_list[-1] = errorCheckpoint
+#                        nError = 0
+#                        for k in range(errorCheckpoint_list.shape[0]):
+#                            if errorCheckpoint_list[k] <= toleratePositionError: # acceptable distance for holding position
+#                                nError = nError + 1
+#                        if nError == sizeErrorList:
+#                            newPhase = 4 # the drone starts Phase 4
+#                            Vuav = np.array([shipVelocity[0], shipVelocity[1]])
+#                            Vdrone = np.array([Vuav[0], Vuav[1], 0])
+#
 
 #    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% PHASE 0 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             elif phase == 0: # the program is starting
@@ -555,6 +571,8 @@ def TrajectoryCreation(t, x_drone, y_drone, z_drone, dictionnary):
                 newPhase = phase012[0]
                 Vuav = np.array([phase012[1], phase012[2]])
                 Vdrone = np.array([Vuav[0], Vuav[1], 0])
+                newPhase = 4
+                Vdrone = np.array([0,0,0])
 
 
 #    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% PHASE 1 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -703,6 +721,9 @@ def TrajectoryCreation(t, x_drone, y_drone, z_drone, dictionnary):
             if np.abs((np.linalg.norm(newVelocity[0:2]) - np.linalg.norm(previousVelocity[0:2]))) > lim_acceleration_diff and accelerationValues[0] == 0:
                 truefalse = 1
 
+                if phase == 41:
+                    accelerationDuration = np.sqrt(2)*(toleratePositionError_changePhase)/np.abs(newVelocity[0]  - previousVelocity[0])
+                    print('accelerationDuration = '+repr(accelerationDuration))
                 a_x = (newVelocity[0] - previousVelocity[0])/accelerationDuration
                 a_y = (newVelocity[1] - previousVelocity[1])/accelerationDuration
                 a_z = 0
@@ -860,7 +881,8 @@ def desired_pos(t, x, dictionnary, x_ship):
     desiredPosition= dictionnary['desiredPosition']
     pointT1= dictionnary['pointT1']
     refreshTime = dictionnary['refreshTime']
-    zFirstPhases = 1.7
+    shipDirection = ShipDirection(dictionnary)
+    zFirstPhases = 1
     zLanding = 1 # altitude of the landing
     limitVelocity = 0.5;
 
@@ -870,164 +892,196 @@ def desired_pos(t, x, dictionnary, x_ship):
     if deltaT1 >= refreshTime:
         pointT1 = t
         dictionnary['pointT1'] = pointT1
-        shipPosition = x_ship#ShipPosition(t, dictionnary) # simulation of the ship position
+        shipPosition = ShipPosition(t, dictionnary) # simulation of the ship position
         UpdatePositionShip_list(t, shipPosition, dictionnary) #  update the ship position lsit
         positionShip_list = dictionnary['positionShip_list']
-        TrajectoryCreation(t, desiredPosition[0], desiredPosition[1], desiredPosition[2], dictionnary);
 
-
-    if t < turnValues[0] + turnValues[1]/turnValues[8]: # TURN
-#         turnValues = [t, angle, Ox, Oy, startAngle, side, z_drone, R, limitVelocity];
-        xd = np.array([turnValues[2] + turnValues[7]*np.cos(turnValues[4] + turnValues[5]*turnValues[8]*(t - turnValues[0])), turnValues[3] + turnValues[7]*np.sin(turnValues[4] + turnValues[5]*turnValues[8]*(t - turnValues[0])), turnValues[6]])
-        xd_dot = np.array([-turnValues[5]*turnValues[7]*turnValues[8]*np.sin(turnValues[4] + turnValues[5]*turnValues[8]*(t - turnValues[0])), turnValues[5]*turnValues[7]*turnValues[8]*np.cos(turnValues[4] + turnValues[5]*turnValues[8]*(t - turnValues[0])), 0])
-        xd_ddot = np.array([-turnValues[7]*turnValues[8]*turnValues[8]*np.cos(turnValues[4] + turnValues[5]*turnValues[8]*(t - turnValues[0])), -turnValues[7]*turnValues[8]*turnValues[8]*np.sin(turnValues[4] + turnValues[5]*turnValues[8]*(t - turnValues[0])), 0])
-#        if phase == 3:
-#            S = Phase1Point_A(xd[0], xd[1], np.hstack((dictionnary['shipDirection'], dictionnary['shipDirection'])))
-#            startPosition = np.array([S[0], S[1], x[2]])
-#        else:
-#            startPosition = xd
-        startPosition = xd
-        startPosition[2] = zFirstPhases
-        dictionnary['startPosition'] = startPosition
-        startT = t
-        dictionnary['startT'] = startT
-        accelerationValues[1] = t
-        accelerationValues[6:9] = xd_dot
-        accelerationValues[9:12] = xd
-        accelerationValues[3:6] = (droneVelocity - xd_dot)/accelerationValues[12]
-
-
-    elif accelerationValues[0] == 1 and t < accelerationValues[2] and (phase == 3 or phase == 31 or phase == 41 or phase == 42): # ACCELERATION
-#         accelerationValues = [truefalse, tStart, tFinal, a_x, a_y, a_z, start_V(1,1), start_V(1,2), start_V(1,3), x_drone, y_drone, z_drone, accelerationDuration];
-        xd_ddot = accelerationValues[3:6]
-        xd_dot = (accelerationValues[6:9] + xd_ddot*(t - accelerationValues[1]))
-        xd = accelerationValues[9:12] + accelerationValues[6:9]*(t - accelerationValues[1]) + 0.5*accelerationValues[3:6]*((t - accelerationValues[1])**2)
-#        S = Phase1Point_A(xd[0], xd[1], np.hstack((dictionnary['shipDirection'], dictionnary['shipDirection'])))
-#        startPosition = np.array([S[0], S[1], x[2]])
-        startPosition = xd
-        dictionnary['startPosition'] = startPosition
-        startT = t
-        dictionnary['startT'] = startT
-
-
-    elif phase == 1:
-        startPosition[2] = zFirstPhases
-        dictionnary['startPosition'] = startPosition
-        xd = (startPosition + droneVelocity*(t - startT))
-        xd_dot = droneVelocity
-        xd_ddot = np.array([0, 0, 0])
-
-
-    elif phase == 2:
-        startPosition[2] = zFirstPhases
-        dictionnary['startPosition'] = startPosition
-        xd = (startPosition + droneVelocity*(t - startT))
-        xd_dot = droneVelocity
-        xd_ddot = np.array([0, 0, 0])
-
-
-    elif phase == 3:
-        accelerationValues[0] = 0
-        startPosition[2] = zFirstPhases
-        dictionnary['startPosition'] = startPosition
-        xd = (startPosition + droneVelocity*(t - startT))
-        xd_dot = droneVelocity
-        xd_ddot = np.array([0, 0, 0])
-
-
-    elif phase == 31: # stay on checkPoint
-        accelerationValues[0] = 0
-        xd = checkPoint
-        xd_dot = droneVelocity
-        xd_ddot = np.array([0, 0, 0])
-
-
-    elif phase == 4:
-        xd = np.array([startPosition[0] + droneVelocity[0]*(t - startT), startPosition[1] + droneVelocity[1]*(t - startT), ((zFirstPhases + zLanding)/2) + ((zFirstPhases - zLanding)/2)*np.sin(-limitVelocity*(t - startT) + np.pi/2)])
-        xd_dot = np.array([droneVelocity[0], droneVelocity[1], -limitVelocity*((zFirstPhases - zLanding)/2)*np.cos(-limitVelocity*(t-startT) + np.pi/2)])
-        xd_ddot = np.array([0, 0, -limitVelocity*limitVelocity*((zFirstPhases - zLanding)/2)*np.sin(-limitVelocity*(t-startT) + np.pi/2)])
-
-
-    elif phase == 41:
-        accelerationValues[0] = 0
-        xd = np.array([positionShip_list[0, -1], positionShip_list[1, -1], zLanding])
-        xd_dot = droneVelocity
-        xd_ddot = np.array([0, 0, 0])
-
-
-    elif phase == 42:
-        accelerationValues[0] = 0
-        startPosition[2] = zLanding
-        dictionnary['startPosition'] = startPosition
-        xd = (startPosition + droneVelocity*(t - startT))
-        xd_dot = droneVelocity
-        xd_ddot = np.array([0, 0, 0])
-
-
-#    elif phase == 5: # landing duration = 11s
-##         landingValues = [t0, t1Landing, t2Landing, t3Landing, k11, k12, k13, k21, k22, k23, k31, k32, k33, h3];
-#        if t <= startT + landingValues[1]:
-#            xd = np.array([startPosition[0], startPosition[1], 0.5*(landingValues[4]*(t - startT)**2) + landingValues[6]])
-#            xd_dot = np.array([0, 0, landingValues[4]*(t - startT)])
-#            xd_ddot = np.array([0, 0, landingValues[4]])
-#
-#        elif t <= startT + landingValues[2]:
-#            xd = np.array([startPosition[0], startPosition[1], 0.5*(landingValues[7]*(t - startT)**2) + landingValues[8]*(t - startT) + landingValues[9]])
-#            xd_dot = np.array([0, 0, landingValues[7]*(t - startT) + landingValues[8]])
-#            xd_ddot = np.array([0, 0, landingValues[7]])
-#
-#        elif t <= startT + landingValues[3]:
-#            xd = np.array([startPosition[0], startPosition[1], landingValues[11]*(t - startT) + landingValues[12]])
-#            xd_dot = np.array([0, 0, landingValues[11]])
-#            xd_ddot = np.array([0, 0, 0])
-#
-#        else:
-#            xd = np.array([startPosition[0], startPosition[1], 0])
-#            xd_dot = np.array([0, 0, 0])
-#            xd_ddot = np.array([0, 0, 0])
-
-    elif phase == 5: # landing duration = 11s
-#         landingValues = [t0, t1Landing, t2Landing, t3Landing, k11, k12, k13, k21, k22, k23, k31, k32, k33, h3];
-        if t <= startT + landingValues[1]:
-            xd = np.array([positionShip_list[0,-1], positionShip_list[1,-1], 0.5*(landingValues[4]*(t - startT)**2) + landingValues[6]])
-            xd_dot = np.array([droneVelocity[0], droneVelocity[1], landingValues[4]*(t - startT)])
-            xd_ddot = np.array([0, 0, landingValues[4]])
-
-        elif t <= startT + landingValues[2]:
-            xd = np.array([positionShip_list[0, -1], positionShip_list[1,-1], 0.5*(landingValues[7]*(t - startT)**2) + landingValues[8]*(t - startT) + landingValues[9]])
-            xd_dot = np.array([droneVelocity[0], droneVelocity[1], landingValues[7]*(t - startT) + landingValues[8]])
-            xd_ddot = np.array([0, 0, landingValues[7]])
-
-        elif t <= startT + landingValues[3]:
-            xd = np.array([positionShip_list[0, -1], positionShip_list[1,-1], landingValues[11]*(t - startT) + landingValues[12]])
-            xd_dot = np.array([droneVelocity[0], droneVelocity[1], landingValues[11]])
-            xd_ddot = np.array([0, 0, 0])
-
+        if phase != 666:
+            positionShip_list = dictionnary['positionShip_list']
         else:
-            xd = np.array([positionShip_list[0,-1], positionShip_list[1,-1], 0])
-            xd_dot = np.array([droneVelocity[0], droneVelocity[1], 0])
-            xd_ddot = np.array([0, 0, 0])
-
-    elif phase == 0:
-        startPosition[2] = zFirstPhases;
-        dictionnary['startPosition'] = startPosition
-        xd = startPosition
-        xd_dot = np.array([0, 0, 0])
+            print('SECURITY STOP')
+        TrajectoryCreation(t, desiredPosition[0], desiredPosition[1], desiredPosition[2], dictionnary);
+    if x[0] >= 1.90 or x[1] >= 3.1 or phase == 666:
+        phase = 666
+        dictionnary['phase'] = phase
+        security = dictionnary['security']
+        xd = np.array([security[0], security[1], (security[2] - 0.1*(t - security[3]))])
+        xd_dot = np.array([0, 0, -0.1])
         xd_ddot = np.array([0, 0, 0])
-        startT = t
-        dictionnary['startT'] = startT
+    else:
+
+        if t < turnValues[0] + turnValues[1]/turnValues[8]: # TURN
+    #         turnValues = [t, angle, Ox, Oy, startAngle, side, z_drone, R, limitVelocity];
+            xd = np.array([turnValues[2] + turnValues[7]*np.cos(turnValues[4] + turnValues[5]*turnValues[8]*(t - turnValues[0])), turnValues[3] + turnValues[7]*np.sin(turnValues[4] + turnValues[5]*turnValues[8]*(t - turnValues[0])), turnValues[6]])
+            xd_dot = np.array([-turnValues[5]*turnValues[7]*turnValues[8]*np.sin(turnValues[4] + turnValues[5]*turnValues[8]*(t - turnValues[0])), turnValues[5]*turnValues[7]*turnValues[8]*np.cos(turnValues[4] + turnValues[5]*turnValues[8]*(t - turnValues[0])), 0])
+            xd_ddot = np.array([-turnValues[7]*turnValues[8]*turnValues[8]*np.cos(turnValues[4] + turnValues[5]*turnValues[8]*(t - turnValues[0])), -turnValues[7]*turnValues[8]*turnValues[8]*np.sin(turnValues[4] + turnValues[5]*turnValues[8]*(t - turnValues[0])), 0])
+            security = np.array([xd[0], xd[1], xd[2], t])
+            dictionnary['security'] = security
+    #        if phase == 3:
+    #            S = Phase1Point_A(xd[0], xd[1], np.hstack((dictionnary['shipDirection'], dictionnary['shipDirection'])))
+    #            startPosition = np.array([S[0], S[1], x[2]])
+    #        else:
+    #            startPosition = xd
+            startPosition = xd
+            startPosition[2] = zFirstPhases
+            dictionnary['startPosition'] = startPosition
+            startT = t
+            dictionnary['startT'] = startT
+            accelerationValues[1] = t
+            accelerationValues[6:9] = xd_dot
+            accelerationValues[9:12] = xd
+            accelerationValues[3:6] = (droneVelocity - xd_dot)/accelerationValues[12]
 
 
-    elif phase == -1:
-#         startAltitudeValues = [status, x_droneStart, y_droneStart, z_droneStart, side, k, k']
-        xd = np.array([startAltitudeValues[1], startAltitudeValues[2], startAltitudeValues[5] + startAltitudeValues[6]*startAltitudeValues[4]*np.sin(-limitVelocity*t + np.pi/2)])
-        xd_dot = np.array([0, 0, -startAltitudeValues[6]*startAltitudeValues[4]*limitVelocity*np.cos(-limitVelocity*t + np.pi/2)])
-        xd_ddot = np.array([0, 0, -startAltitudeValues[6]*startAltitudeValues[4]*limitVelocity*limitVelocity*np.sin(limitVelocity*t + np.pi/2)])
-        startT = t
-        dictionnary['startT'] = startT
-        startPosition = xd
-        dictionnary['startPosition'] = startPosition
+        elif accelerationValues[0] == 1 and t < accelerationValues[2] and (phase == 3 or phase == 31 or phase == 41 or phase == 42): # ACCELERATION
+    #         accelerationValues = [truefalse, tStart, tFinal, a_x, a_y, a_z, start_V(1,1), start_V(1,2), start_V(1,3), x_drone, y_drone, z_drone, accelerationDuration];
+            xd_ddot = accelerationValues[3:6]
+            xd_dot = (accelerationValues[6:9] + xd_ddot*(t - accelerationValues[1]))
+            xd = accelerationValues[9:12] + accelerationValues[6:9]*(t - accelerationValues[1]) + 0.5*accelerationValues[3:6]*((t - accelerationValues[1])**2)
+    #        S = Phase1Point_A(xd[0], xd[1], np.hstack((dictionnary['shipDirection'], dictionnary['shipDirection'])))
+    #        startPosition = np.array([S[0], S[1], x[2]])
+            proj_startPosition = Phase1Point_A(xd[0], xd[1], np.hstack((shipDirection, shipDirection)), dictionnary)
+            startPosition = np.array([proj_startPosition[0], proj_startPosition[1], zLanding])
+            startPosition = xd
+            dictionnary['startPosition'] = startPosition
+            startT = t
+            dictionnary['startT'] = startT
+            security = np.array([xd[0], xd[1], xd[2], t])
+            dictionnary['security'] = security
 
+
+    #    elif phase == 1:
+    #        startPosition[2] = zFirstPhases
+    #        dictionnary['startPosition'] = startPosition
+    #        xd = (startPosition + droneVelocity*(t - startT))
+    #        xd_dot = droneVelocity
+    #        xd_ddot = np.array([0, 0, 0])
+    #
+    #
+    #    elif phase == 2:
+    #        startPosition[2] = zFirstPhases
+    #        dictionnary['startPosition'] = startPosition
+    #        xd = (startPosition + droneVelocity*(t - startT))
+    #        xd_dot = droneVelocity
+    #        xd_ddot = np.array([0, 0, 0])
+    #
+    #
+    #    elif phase == 3:
+    #        accelerationValues[0] = 0
+    #        startPosition[2] = zFirstPhases
+    #        dictionnary['startPosition'] = startPosition
+    #        xd = (startPosition + droneVelocity*(t - startT))
+    #        xd_dot = droneVelocity
+    #        xd_ddot = np.array([0, 0, 0])
+    #
+    #
+    #    elif phase == 31: # stay on checkPoint
+    #        accelerationValues[0] = 0
+    #        xd = checkPoint
+    #        xd_dot = droneVelocity
+    #        xd_ddot = np.array([0, 0, 0])
+
+
+        elif phase == 4:
+            proj_startPosition = Phase1Point_A(xd[0], xd[1], np.hstack((shipDirection, shipDirection)), dictionnary)
+            startPosition = np.array([proj_startPosition[0], proj_startPosition[1], zLanding])
+            xd = np.array([startPosition[0] + droneVelocity[0]*(t - startT), startPosition[1] + droneVelocity[1]*(t - startT), ((zFirstPhases + zLanding)/2) + ((zFirstPhases - zLanding)/2)*np.sin(-limitVelocity*(t - startT) + np.pi/2)])
+            xd_dot = np.array([droneVelocity[0], droneVelocity[1], -limitVelocity*((zFirstPhases - zLanding)/2)*np.cos(-limitVelocity*(t-startT) + np.pi/2)])
+            xd_ddot = np.array([0, 0, -limitVelocity*limitVelocity*((zFirstPhases - zLanding)/2)*np.sin(-limitVelocity*(t-startT) + np.pi/2)])
+            security = np.array([xd[0], xd[1], xd[2], t])
+            dictionnary['security'] = security
+
+
+        elif phase == 41:
+            proj_startPosition = Phase1Point_A(xd[0], xd[1], np.hstack((shipDirection, shipDirection)), dictionnary)
+            startPosition = np.array([proj_startPosition[0], proj_startPosition[1], zLanding])
+            accelerationValues[0] = 0
+            xd = np.array([positionShip_list[0, -1], positionShip_list[1, -1], zLanding])
+            xd_dot = droneVelocity
+            xd_ddot = np.array([0, 0, 0])
+            security = np.array([xd[0], xd[1], xd[2], t])
+            dictionnary['security'] = security
+
+
+        elif phase == 42:
+            proj_startPosition = Phase1Point_A(xd[0], xd[1], np.hstack((shipDirection, shipDirection)), dictionnary)
+            startPosition = np.array([proj_startPosition[0], proj_startPosition[1], zLanding])
+            accelerationValues[0] = 0
+            startPosition[2] = zLanding
+            dictionnary['startPosition'] = startPosition
+            xd = (startPosition + droneVelocity*(t - startT))
+            xd_dot = droneVelocity
+            xd_ddot = np.array([0, 0, 0])
+            security = np.array([xd[0], xd[1], xd[2], t])
+            dictionnary['security'] = security
+
+    #    elif phase == 5: # landing duration = 11s
+    ##         landingValues = [t0, t1Landing, t2Landing, t3Landing, k11, k12, k13, k21, k22, k23, k31, k32, k33, h3];
+    #        if t <= startT + landingValues[1]:
+    #            xd = np.array([startPosition[0], startPosition[1], 0.5*(landingValues[4]*(t - startT)**2) + landingValues[6]])
+    #            xd_dot = np.array([0, 0, landingValues[4]*(t - startT)])
+    #            xd_ddot = np.array([0, 0, landingValues[4]])
+    #
+    #        elif t <= startT + landingValues[2]:
+    #            xd = np.array([startPosition[0], startPosition[1], 0.5*(landingValues[7]*(t - startT)**2) + landingValues[8]*(t - startT) + landingValues[9]])
+    #            xd_dot = np.array([0, 0, landingValues[7]*(t - startT) + landingValues[8]])
+    #            xd_ddot = np.array([0, 0, landingValues[7]])
+    #
+    #        elif t <= startT + landingValues[3]:
+    #            xd = np.array([startPosition[0], startPosition[1], landingValues[11]*(t - startT) + landingValues[12]])
+    #            xd_dot = np.array([0, 0, landingValues[11]])
+    #            xd_ddot = np.array([0, 0, 0])
+    #
+    #        else:
+    #            xd = np.array([startPosition[0], startPosition[1], 0])
+    #            xd_dot = np.array([0, 0, 0])
+    #            xd_ddot = np.array([0, 0, 0])
+
+        elif phase == 5: # landing duration = 11s
+    #         landingValues = [t0, t1Landing, t2Landing, t3Landing, k11, k12, k13, k21, k22, k23, k31, k32, k33, h3];
+            if t <= startT + landingValues[1]:
+                xd = np.array([positionShip_list[0,-1], positionShip_list[1,-1], 0.5*(landingValues[4]*(t - startT)**2) + landingValues[6]])
+                xd_dot = np.array([droneVelocity[0], droneVelocity[1], landingValues[4]*(t - startT)])
+                xd_ddot = np.array([0, 0, landingValues[4]])
+
+            elif t <= startT + landingValues[2]:
+                xd = np.array([positionShip_list[0, -1], positionShip_list[1,-1], 0.5*(landingValues[7]*(t - startT)**2) + landingValues[8]*(t - startT) + landingValues[9]])
+                xd_dot = np.array([droneVelocity[0], droneVelocity[1], landingValues[7]*(t - startT) + landingValues[8]])
+                xd_ddot = np.array([0, 0, landingValues[7]])
+
+            elif t <= startT + landingValues[3]:
+                xd = np.array([positionShip_list[0, -1], positionShip_list[1,-1], landingValues[11]*(t - startT) + landingValues[12]])
+                xd_dot = np.array([droneVelocity[0], droneVelocity[1], landingValues[11]])
+                xd_ddot = np.array([0, 0, 0])
+
+            else:
+                xd = np.array([positionShip_list[0,-1], positionShip_list[1,-1], 0])
+                xd_dot = np.array([droneVelocity[0], droneVelocity[1], 0])
+                xd_ddot = np.array([0, 0, 0])
+            security = np.array([xd[0], xd[1], xd[2], t])
+            dictionnary['security'] = security
+        elif phase == 0:
+            startPosition[2] = zFirstPhases;
+            dictionnary['startPosition'] = startPosition
+            xd = startPosition
+            xd_dot = np.array([0, 0, 0])
+            xd_ddot = np.array([0, 0, 0])
+            startT = t
+            dictionnary['startT'] = startT
+            security = np.array([xd[0], xd[1], xd[2], t])
+            dictionnary['security'] = security
+
+        elif phase == -1:
+    #         startAltitudeValues = [status, x_droneStart, y_droneStart, z_droneStart, side, k, k']
+            xd = np.array([startAltitudeValues[1], startAltitudeValues[2], startAltitudeValues[5] + startAltitudeValues[6]*startAltitudeValues[4]*np.sin(-limitVelocity*t + np.pi/2)])
+            xd_dot = np.array([0, 0, -startAltitudeValues[6]*startAltitudeValues[4]*limitVelocity*np.cos(-limitVelocity*t + np.pi/2)])
+            xd_ddot = np.array([0, 0, -startAltitudeValues[6]*startAltitudeValues[4]*limitVelocity*limitVelocity*np.sin(limitVelocity*t + np.pi/2)])
+            startT = t
+            dictionnary['startT'] = startT
+            startPosition = xd
+            dictionnary['startPosition'] = startPosition
+            security = np.array([xd[0], xd[1], xd[2], t])
+            dictionnary['security'] = security
 #        pdb.set_trace()
 
 #    %%%%%%%%%%%%%%%%%%%%%%%%%%%% FOR PLOTING %%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1039,10 +1093,10 @@ def desired_pos(t, x, dictionnary, x_ship):
 #    tPlot = [tPlot, t];
 #    xd_dotTime = [xd_dotTime xd_dot];
 #    xd_ddotTime = [xd_ddotTime xd_ddot];
-    previousVelocity = xd_dot
-    dictionnary['previousVelocity'] = previousVelocity
-    desiredPosition = xd
-    dictionnary['desiredPosition'] = desiredPosition
+        previousVelocity = xd_dot
+        dictionnary['previousVelocity'] = previousVelocity
+        desiredPosition = xd
+        dictionnary['desiredPosition'] = desiredPosition
 
     if np.linalg.norm(xd_dot[0:2]) != 0:
         b1d[0] = xd_dot[0]/np.linalg.norm(xd_dot[0:2])
@@ -1083,7 +1137,6 @@ def desired_pos(t, x, dictionnary, x_ship):
 #    dictionnary['refreshTime'] = refreshTime
 
 #    uav_t.dictionnary = dictionnary
-
 
 #    (f, M) = uav_t.position_control(t, R, W, x, v, d_in)
 #
