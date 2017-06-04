@@ -1,4 +1,4 @@
-PYTHON?=python
+PYTHON?=pypy
 all: clean build test
 build:
 	${PYTHON} setup_cc.py build_ext -if
@@ -7,11 +7,11 @@ clean:
 	@rm -fr build
 	@rm -rf *.cpp *.c *.so *.html
 test:
-	pytest -v
+	${PYTHON} -m pytest -v
 cc_all: clean cc_build cc_test
 cc_build:
-	${PYTHON} setup_cc.py build_ext -if
+	pypy -m cython setup_cc.py build_ext -if
 cc_test:
-	pytest tests/test_cc.py -v -s
+	pypy -m pytest tests/test_cc.py -v -s
 cython:
-	cython cycontrol.pyx --cplus -a
+	pypy -m cython cycontrol.pyx --cplus -a
