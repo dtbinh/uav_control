@@ -7,6 +7,7 @@ import sys
 from trajectory_tracking_FOR_HADWARE import desired_pos, initialisation
 from geometry_msgs.msg import PoseStamped
 import numpy as np
+import pdb
 
 
 pygame.init()
@@ -37,8 +38,22 @@ def window_update(msg):
     window.fill(white)
     message_display(msg)
 
+mode = {'spin':['a',15],
+        'Simon':['s',0],
+        'quit':['q',0],
+        'reset':['r',3],
+        'quit':['q',0],
+        'take off':['t',5],
+        'land':['l',5],
+        'hover':['h',0],
+        'motor':['m',0],
+        'warmup':['w',0],
+        'kill':['k',0],
+        'point to point':['p',15],
+        }
 
-mission =  {'mode':'init','motor':False,'warmup':False}
+
+mission =  {'mode':'init','t_mission':0,'motor':False,'warmup':False}
 z_min = 0.35
 z_hover = 1.5
 v_up = 0.3
@@ -55,52 +70,24 @@ def mocap_sub_ship(msg):
     x = msg.pose.position
     x_ship = np.array([x.x,x.y,x.z])
 
+def motor_set(motor = False, warmup = False):
+    if rospy.get_param('/odroid_node/Motor'):
+        rospy.set_param('/odroid_node/Motor', motor)
+    if rospy.get_param('/odroid_node/MotorWarmup'):
+        rospy.set_param('/odroid_node/MotorWarmup', warmup)
+
 def get_key():
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
-            rospy.set_param('/odroid_node/Motor', False)
-            rospy.set_param('/odroid_node/MotorWarmup', True)
-            rospy.sleep(0.3)
+            motor_set(False,False)
             sys.exit()
         if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_f:
-                mission['Forward'] = True
-                print('Forward')
-            elif event.key == pygame.K_i:
-                mission['mode'] = 'motor_test'
-                window_update('Motor warmup+motor ON')
-                rospy.set_param('/odroid_node/MotorWarmup', True)
-                rospy.set_param('/odroid_node/Motor', True)
-            elif event.key == pygame.K_a:
-                mission['mode'] = 'spin'
-                window_update('Spin!')
-            elif event.key == pygame.K_r:
-                mission['mode'] = 'reset'
-                window_update('Resetting the rosparams')
-            elif event.key == pygame.K_s:
-                mission['mode'] = 'Simon'
-                window_update('Simon mission')
-            elif event.key == pygame.K_q:
-                rospy.set_param('/odroid_node/Motor', False)
-                sys.exit()
-            elif event.key == pygame.K_t:
-                mission['mode'] = 'takeoff'
-                window_update('Take off')
-            elif event.key == pygame.K_l:
-                mission['mode'] = 'land'
-                window_update('Landing')
-            elif event.key == pygame.K_h:
-                mission['mode'] = 'hover'
-                window_update('Hovering at origin')
-            elif event.key == pygame.K_m:
-                mission['motor'] = not mission['motor']
-                window_update('Motor on')
-            elif event.key == pygame.K_w:
-                mission['warmup'] = not mission['warmup']
-                window_update('Motor warmup')
-            elif event.key == pygame.K_p:
-                mission['mode'] = 'p2p'
-                window_update('Point to point')
+            for mode_c in mode.keys():
+               if eval('event.key == pygame.K_{}'.format(mode[mode_c][0])):
+                   print('Flight mode: '+mode_c)
+                   #window_update(mode_c)
+                   mission['mode'] = mode_c
+                   mission['t_mission'] = mode[mode_c][1]
 
 
 pub = rospy.Publisher('xc', trajectory, queue_size= 10)
@@ -113,6 +100,13 @@ def mission_request():
     cmd = trajectory()
     cmd.b1 = [1,0,0]
     cmd.header.frame_id = 'uav'
+    t_total = mission['t_mission']
+    window_update(mission['mode'])
+
+    if mission['mode'] == 'kill':
+        motor_set(False,False)
+        print('Stopping motors')
+        time.sleep(.1)
 
     if mission['motor'] == True:
         if rospy.get_param('/odroid_node/Motor'):
@@ -134,6 +128,7 @@ def mission_request():
             print('Motor warmup ON')
         pub.publish(cmd)
         mission['warmup'] = False
+
     if mission['mode'] == 'reset':
         rospy.set_param('/odroid_node/MotorWarmup', True)
         print('Motor warmup OFF')
@@ -141,22 +136,27 @@ def mission_request():
         print('Motor warmup OFF')
         pub.publish(cmd)
 
-    elif mission['mode'] == 'takeoff':
-        rospy.set_param('/odroid_node/Motor', True)
-        rospy.set_param('/odroid_node/MotorWarmup', True)
-        print('Motor warmup ON')
-        rospy.sleep(4)
+    elif mission['mode'] == 'quit':
+        print('terminating mission')
+        rospy.set_param('/odroid_node/Motor', False)
         rospy.set_param('/odroid_node/MotorWarmup', False)
+        sys.exit()
+
+    elif mission['mode'] == 'take off':
+        print('Motor warmup ON')
+        motor_set(True,True)
+        rospy.sleep(2)
+        motor_set(True,False)
         print('Taking off at {} sec'.format(time.time()-t_init))
         t_init = time.time()
-        t_total = 5
         t_cur= 0
-        while t_cur <= t_total:
+        while t_cur <= t_total and mission['mode'] == 'take off':
             t_cur = time.time() - t_init
             time.sleep(dt)
             cmd.header.stamp = rospy.get_rostime()
             height = z_min+v_up*t_cur
             cmd.xc = [0,0,height if height < 1.5 else 1.5 ]
+            print(cmd.xc)
             cmd.xc_dot = [0,0,v_up]
             pub.publish(cmd)
             get_key()
@@ -165,9 +165,8 @@ def mission_request():
 
     elif mission['mode'] == 'land':
         print('Landing')
-        t_total = 5
         t_cur = 0
-        while t_cur <= t_total:
+        while t_cur <= t_total and mission['mode'] == 'land':
             t_cur = time.time() - t_init
             time.sleep(dt)
             cmd.header.stamp = rospy.get_rostime()
@@ -175,15 +174,14 @@ def mission_request():
             cmd.xc = [0,0,height if height > z_min else 0]
             cmd.xc_dot = [0,0,-v_up]
             pub.publish(cmd)
+            print(cmd.xc)
             get_key()
             if x_v[2] < z_min:
-                rospy.set_param('/odroid_node/Motor', False)
-        rospy.set_param('/odroid_node/Motor', False)
+                motor_set(False, False)
         mission['mode'] = 'wait'
         print('landing complete')
     elif mission['mode'] == 'spin':
         # TODO
-        t_total = 15
         t_cur = 0
         while t_cur <= t_total:
             t_cur = time.time() - t_init
@@ -200,11 +198,10 @@ def mission_request():
         mission['mode'] = 'wait'
         print('spin')
         pass
-    elif mission['mode'] == 'p2p':
+    elif mission['mode'] == 'point to point':
         # TODO
-        t_total = 15
         t_cur = 0
-        while t_cur <= t_total:
+        while t_cur <= t_total and mission['mode'] == 'point to point':
             t_cur = time.time() - t_init
             time.sleep(dt)
             cmd.header.stamp = rospy.get_rostime()
@@ -221,18 +218,16 @@ def mission_request():
         pass
 
     elif mission['mode'] == 'Simon':
-        rospy.set_param('/odroid_node/Motor', True)
-        rospy.set_param('/odroid_node/MotorWarmup', True)
         print('Motor warmup ON')
-        rospy.sleep(4)
-        rospy.set_param('/odroid_node/MotorWarmup', False)
+        motor_set(True,True)
+        rospy.sleep(2)
+        motor_set(True,False)
         print('Simon')
-        t_total = 140
         t_cur = 0
         t_init = time.time()
         x0 = x_v #[0,0,0]
         dictionnary = initialisation(x0[0],x0[1],x0[2])
-        while True:
+        while mission['mode'] == 'Simon':
             t_cur = time.time() - t_init
             time.sleep(dt)
             cmd.header.stamp = rospy.get_rostime()
@@ -244,8 +239,8 @@ def mission_request():
             cmd.xc_2dot = d_pos[2]
             pub.publish(cmd)
             get_key()
-	    if x_v[2] < z_min and t_cur > 5:
-        	rospy.set_param('/odroid_node/Motor', False)
+            if x_v[2] < z_min and t_cur > 5:
+                motor_set(False, False)
         mission['mode'] = 'wait'
         print('Simon mission complete')
         rospy.set_param('/odroid_node/Motor', False)

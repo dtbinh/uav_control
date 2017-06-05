@@ -7,7 +7,7 @@ Created on Fri Jun  2 14:40:46 2017
 """
 
 from __future__ import division
-import pyximport; pyximport.install()
+# import pyximport; pyximport.install()
 # import controller here
 import numpy as np
 import sys
