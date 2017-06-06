@@ -69,10 +69,10 @@ def mocap_sub_ship(msg):
     x_ship = np.array([x.x,x.y,x.z])
 
 def motor_set(motor = False, warmup = False):
-    if rospy.get_param('/odroid_node/Motor'):
-        rospy.set_param('/odroid_node/Motor', motor)
-    if rospy.get_param('/odroid_node/MotorWarmup'):
-        rospy.set_param('/odroid_node/MotorWarmup', warmup)
+    if rospy.get_param('/node/Motor'):
+        rospy.set_param('/node/Motor', motor)
+    if rospy.get_param('/node/MotorWarmup'):
+        rospy.set_param('/node/MotorWarmup', warmup)
 
 def get_key():
     for event in pygame.event.get():
@@ -108,37 +108,37 @@ def mission_request():
         time.sleep(.1)
 
     if mission['motor'] == True:
-        if rospy.get_param('/odroid_node/Motor'):
-            rospy.set_param('/odroid_node/Motor', False)
+        if rospy.get_param('/node/Motor'):
+            rospy.set_param('/node/Motor', False)
             print('Motor OFF')
         else:
-            rospy.set_param('/odroid_node/Motor', True)
+            rospy.set_param('/node/Motor', True)
             print('Motor ON')
-        rospy.set_param('/odroid_node/MotorWarmup', True)
+        rospy.set_param('/node/MotorWarmup', True)
         pub.publish(cmd)
         mission['motor'] = False
 
     elif mission['warmup'] == True:
-        if rospy.get_param('/odroid_node/MotorWarmup'):
-            rospy.set_param('/odroid_node/MotorWarmup', False)
+        if rospy.get_param('/node/MotorWarmup'):
+            rospy.set_param('/node/MotorWarmup', False)
             print('Motor warmup OFF')
         else:
-            rospy.set_param('/odroid_node/MotorWarmup', True)
+            rospy.set_param('/node/MotorWarmup', True)
             print('Motor warmup ON')
         pub.publish(cmd)
         mission['warmup'] = False
 
     if mission['mode'] == 'reset':
-        rospy.set_param('/odroid_node/MotorWarmup', True)
+        rospy.set_param('/node/MotorWarmup', True)
         print('Motor warmup OFF')
-        rospy.set_param('/odroid_node/MotorWarmup', False)
+        rospy.set_param('/node/MotorWarmup', False)
         print('Motor warmup OFF')
         pub.publish(cmd)
 
     elif mission['mode'] == 'quit':
         print('terminating mission')
-        rospy.set_param('/odroid_node/Motor', False)
-        rospy.set_param('/odroid_node/MotorWarmup', False)
+        rospy.set_param('/node/Motor', False)
+        rospy.set_param('/node/MotorWarmup', False)
         sys.exit()
 
     elif mission['mode'] == 'take off':
@@ -192,7 +192,7 @@ def mission_request():
             pub.publish(cmd)
             get_key()
             if x_v[2] < z_min:
-                rospy.set_param('/odroid_node/Motor', False)
+                rospy.set_param('/node/Motor', False)
         mission['mode'] = 'wait'
         print('spin')
         pass
@@ -209,7 +209,7 @@ def mission_request():
             pub.publish(cmd)
             get_key()
             if x_v[2] < z_min:
-                rospy.set_param('/odroid_node/Motor', False)
+                rospy.set_param('/node/Motor', False)
         mission['mode'] = 'wait'
         print('Finish p2p')
         pass
@@ -239,7 +239,7 @@ def mission_request():
                 motor_set(False, False)
         mission['mode'] = 'wait'
         print('Simon mission complete')
-        rospy.set_param('/odroid_node/Motor', False)
+        rospy.set_param('/node/Motor', False)
     elif mission['mode'] == 'hover':
         mission['mode'] = 'wait'
         pass

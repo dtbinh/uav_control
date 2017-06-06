@@ -96,7 +96,7 @@ void controller::GeometricPositionController(double* x_in, double* v_in, double*
   //err_sat(-eiR_sat, eiR_sat, eiR);
   eiR_last = eiR;
   // 3D Moment
-  M = -kR*eR-kW*eW-kiR*eiR+hat_eigen(R.transpose()*Rc*Wc)*J*R.transpose()*Rc*Wc+J*R.transpose()*Rc*Wc_dot;// LBFF
+  M = -kR*eR-kW*eW-kiR*eiR+hat_eigen(R.transpose()*Rc*Wc)*J*R.transpose()*Rc*Wc+J*R.transpose()*Rc*Wc_dot;
 
   FM[0] = f;
   FM[1] = M[0];

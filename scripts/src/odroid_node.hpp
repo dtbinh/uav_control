@@ -1,5 +1,5 @@
-#ifndef ODROID_NODE_H
-#define ODROID_NODE_H
+#ifndef node_H
+#define node_H
 // System header files (gcc compiler on ODROID)
 #include <math.h>
 #include "AUX_Functions.h"
@@ -45,7 +45,7 @@
 #include <std_msgs/Int8MultiArray.h>
 using namespace Eigen;
 
-class odroid_node
+class node
 {
 public:
   boost::mutex mutex_;
@@ -130,9 +130,9 @@ public:
   std::vector<int>  mtr_addr;
   uint8_t* motor_power;
   //! Constructor.
-  odroid_node();
+  node();
   //! Destructor.
-  ~odroid_node();
+  ~node();
   //! Callback function for dynamic reconfigure server.
   // void configCallback(node_example::node_example_paramsConfig
   // &config, uint32_t level);
