@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import time
 import rospy
 from uav_control.msg import trajectory
@@ -10,15 +10,14 @@ import numpy as np
 import pdb
 
 
+uav_name = 'Maya'
 pygame.init()
 black = (0,0,0)
 white = (255,255,255)
 red = (255,0,0)
 clock = pygame.time.Clock()
 
-
-display_width = 400
-display_height = 300
+display_width, display_height = 400, 300
 window = pygame.display.set_mode((display_width,display_height))
 window.fill(white)
 pygame.display.update()
@@ -51,7 +50,6 @@ mode = {'spin':['a',15],
         'kill':['k',0],
         'point to point':['p',15],
         }
-
 
 mission =  {'mode':'init','t_mission':0,'motor':False,'warmup':False}
 z_min = 0.35
@@ -101,6 +99,7 @@ def mission_request():
     cmd.b1 = [1,0,0]
     cmd.header.frame_id = 'uav'
     t_total = mission['t_mission']
+    t_cur = 0
     window_update(mission['mode'])
 
     if mission['mode'] == 'kill':
@@ -149,13 +148,12 @@ def mission_request():
         motor_set(True,False)
         print('Taking off at {} sec'.format(time.time()-t_init))
         t_init = time.time()
-        t_cur= 0
         while t_cur <= t_total and mission['mode'] == 'take off':
             t_cur = time.time() - t_init
             time.sleep(dt)
             cmd.header.stamp = rospy.get_rostime()
             height = z_min+v_up*t_cur
-            cmd.xc = [0,0,height if height < 1.5 else 1.5 ]
+            cmd.xc = [x_v[0],x_v[1],height if height < 1.5 else 1.5 ]
             print(cmd.xc)
             cmd.xc_dot = [0,0,v_up]
             pub.publish(cmd)
@@ -165,24 +163,24 @@ def mission_request():
 
     elif mission['mode'] == 'land':
         print('Landing')
-        t_cur = 0
+        z_hover = x_v[2]
         while t_cur <= t_total and mission['mode'] == 'land':
             t_cur = time.time() - t_init
             time.sleep(dt)
             cmd.header.stamp = rospy.get_rostime()
             height = z_hover - v_up*t_cur
-            cmd.xc = [0,0,height if height > z_min else 0]
+            cmd.xc = [x_v[0],x_v[1],height if height > z_min else 0]
             cmd.xc_dot = [0,0,-v_up]
             pub.publish(cmd)
             print(cmd.xc)
             get_key()
             if x_v[2] < z_min:
                 motor_set(False, False)
+                break
         mission['mode'] = 'wait'
         print('landing complete')
     elif mission['mode'] == 'spin':
         # TODO
-        t_cur = 0
         while t_cur <= t_total:
             t_cur = time.time() - t_init
             time.sleep(dt)
@@ -200,7 +198,6 @@ def mission_request():
         pass
     elif mission['mode'] == 'point to point':
         # TODO
-        t_cur = 0
         while t_cur <= t_total and mission['mode'] == 'point to point':
             t_cur = time.time() - t_init
             time.sleep(dt)
@@ -223,7 +220,6 @@ def mission_request():
         rospy.sleep(2)
         motor_set(True,False)
         print('Simon')
-        t_cur = 0
         t_init = time.time()
         x0 = x_v #[0,0,0]
         dictionnary = initialisation(x0[0],x0[1],x0[2])
@@ -255,7 +251,7 @@ def mission_request():
 if __name__ == '__main__':
     try:
         rospy.init_node('command_station', anonymous=True)
-        uav_pose = rospy.Subscriber('/vicon/Maya/pose',PoseStamped, mocap_sub)
+        uav_pose = rospy.Subscriber('/vicon/'+uav_name+'/pose',PoseStamped, mocap_sub)
         ship_pose = rospy.Subscriber('/vicon/ship/pose',PoseStamped, mocap_sub_ship)
         while True:
             mission_request()
