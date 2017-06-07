@@ -39,7 +39,7 @@ def window_update(msg):
 
 
 mission =  {'mode':'init','motor':False,'warmup':False}
-z_min = 0.35
+z_min = 0.4
 z_hover = 1.5
 v_up = 0.3
 x_v = [0,0,0]
