@@ -2,7 +2,6 @@
 #define CONTROLLER_H
 #include <iostream>
 #include <eigen3/Eigen/Dense>
-//#include <odroid/odroid_node.hpp>
 using namespace Eigen;
 class controller
 {
