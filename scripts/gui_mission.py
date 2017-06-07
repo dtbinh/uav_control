@@ -68,11 +68,9 @@ def mocap_sub_ship(msg):
     x = msg.pose.position
     x_ship = np.array([x.x,x.y,x.z])
 
-def motor_set(motor = False, warmup = False):
-    if rospy.get_param('/node/Motor'):
-        rospy.set_param('/node/Motor', motor)
-    if rospy.get_param('/node/MotorWarmup'):
-        rospy.set_param('/node/MotorWarmup', warmup)
+def motor_set(motor, warmup):
+    rospy.set_param('/node/Motor', motor)
+    rospy.set_param('/node/MotorWarmup', warmup)
 
 def get_key():
     for event in pygame.event.get():
@@ -100,35 +98,21 @@ def mission_request():
     cmd.header.frame_id = 'uav'
     t_total = mission['t_mission']
     t_cur = 0
-    window_update(mission['mode'])
-
+    print('motor: '+str(rospy.get_param('/node/Motor')))
+    print('motor warmup: '+str(rospy.get_param('/node/MotorWarmup')))
+    print(mission['mode'])
     if mission['mode'] == 'kill':
         motor_set(False,False)
         print('Stopping motors')
         time.sleep(.1)
 
-    if mission['motor'] == True:
-        if rospy.get_param('/node/Motor'):
-            rospy.set_param('/node/Motor', False)
-            print('Motor OFF')
-        else:
-            rospy.set_param('/node/Motor', True)
-            print('Motor ON')
-        rospy.set_param('/node/MotorWarmup', True)
-        pub.publish(cmd)
-        mission['motor'] = False
-
-    elif mission['warmup'] == True:
-        if rospy.get_param('/node/MotorWarmup'):
-            rospy.set_param('/node/MotorWarmup', False)
-            print('Motor warmup OFF')
-        else:
-            rospy.set_param('/node/MotorWarmup', True)
-            print('Motor warmup ON')
+    elif mission['mode'] == 'warmup':
+        motor_set(True,True)
+        time.sleep(2)
         pub.publish(cmd)
         mission['warmup'] = False
 
-    if mission['mode'] == 'reset':
+    elif mission['mode'] == 'reset':
         rospy.set_param('/node/MotorWarmup', True)
         print('Motor warmup OFF')
         rospy.set_param('/node/MotorWarmup', False)
