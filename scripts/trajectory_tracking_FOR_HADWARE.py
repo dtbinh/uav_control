@@ -18,8 +18,8 @@ def initialisation(a, b, c):
     v_ship = [0.1 , 0.1, 0]
     dictionnary ={'landingCompleted' : 0, 'phase': np.array([])}
     dictionnary['turnValues'] = np.array([-1, -1, -1, -1, -1, -1, -1, -1, 1])
-    zFirstPhases = 1
-    tolerateAltitudeError = 0.15
+    zFirstPhases = 1.8
+    tolerateAltitudeError = 0.35
     if zFirstPhases + tolerateAltitudeError <= x0[2] or x0[2] <= zFirstPhases - tolerateAltitudeError:
     #   startAltitudeValues = [status, x_droneStart, y_droneStart, z_droneStart, velocity];
         startAltitudeValues = np.array([1, x0[0], x0[1], x0[2], 0., 0., 0.])
@@ -405,17 +405,17 @@ def TrajectoryCreation(t, x_drone, y_drone, z_drone, dictionnary):
     
 #    %%%%%%%%%%%%%%% ELEMENTS FOR THE TRAJECTORY %%%%%%%%%%%%%%%
     r = 0.8 # security area
-    zFirstPhases = 1
-    zLanding = 1 # altitude of the landing
+    zFirstPhases = 1.8
+    zLanding = 1.8 # altitude of the landing
     landingCompletedAlt = 0.15
     Vmax_phase1 = 0.5
     Vmax_phase2 = 0.5
     lim_acceleration_diff = 0.05
     accelerationDuration = 1
-    sizeErrorList = 40 # time in refreshTime which the drone has to wait befor going from Phase 3 to Phase 4
+    sizeErrorList = 20 # time in refreshTime which the drone has to wait befor going from Phase 3 to Phase 4
     toleratePositionError = 0.25
     toleratePositionError_changePhase = 0.40
-    tolerateAltitudeError = 0.15
+    tolerateAltitudeError = 0.35
 #    velocityFasterShip = np.min([1 + 0.8/np.max(np.abs(shipVelocity)), 1.8])
     velocityFasterShip = 3#np.max([1 + 0.8/np.max(np.abs(shipVelocity)), 2])
     maxVelocityDiff = 0.7
@@ -894,11 +894,11 @@ def desired_pos(t, x, dictionnary, x_ship):
     pointT1= dictionnary['pointT1']
     refreshTime = dictionnary['refreshTime']
     shipDirection = ShipDirection(dictionnary)
-    zFirstPhases = 1
-    zLanding = 1 # altitude of the landing
+    zFirstPhases = 1.8
+    zLanding = 1.8 # altitude of the landing
     limitVelocity = 0.5;
-    Xmax = 1.90
-    Ymax = 3.1
+    Xmax = 1.70
+    Ymax = 2.9
     
 #    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 #                                                                                                         %

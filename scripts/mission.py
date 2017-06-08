@@ -224,7 +224,7 @@ def mission_request():
         rospy.set_param('/node/Motor', True)
         rospy.set_param('/node/MotorWarmup', True)
         print('Motor warmup ON')
-        rospy.sleep(4)
+        rospy.sleep(1)
         rospy.set_param('/node/MotorWarmup', False)
         print('Simon')
         t_total = 140
