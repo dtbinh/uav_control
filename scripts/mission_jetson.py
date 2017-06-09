@@ -43,6 +43,7 @@ z_min = 0.4
 z_hover = 1.5
 v_up = 0.3
 x_v = [0,0,0]
+y_offset = 1
 x_ship = [0,0,0]
 
 def mocap_sub(msg):
@@ -58,8 +59,8 @@ def mocap_sub_ship(msg):
 def get_key():
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
-            rospy.set_param('/Maya/uav/Motor', False)
-            rospy.set_param('/Maya/uav/MotorWarmup', True)
+            rospy.set_param('/Jetson/uav/Motor', False)
+            rospy.set_param('/Jetson/uav/MotorWarmup', True)
             rospy.sleep(0.3)
             sys.exit()
         if event.type == pygame.KEYDOWN:
@@ -69,8 +70,8 @@ def get_key():
             elif event.key == pygame.K_i:
                 mission['mode'] = 'motor_test'
                 window_update('Motor warmup+motor ON')
-                rospy.set_param('/Maya/uav/MotorWarmup', True)
-                rospy.set_param('/Maya/uav/Motor', True)
+                rospy.set_param('/Jetson/uav/MotorWarmup', True)
+                rospy.set_param('/Jetson/uav/Motor', True)
             elif event.key == pygame.K_a:
                 mission['mode'] = 'spin'
                 window_update('Spin!')
@@ -81,7 +82,7 @@ def get_key():
                 mission['mode'] = 'Simon'
                 window_update('Simon mission')
             elif event.key == pygame.K_q:
-                rospy.set_param('/Maya/uav/Motor', False)
+                rospy.set_param('/Jetson/uav/Motor', False)
                 sys.exit()
             elif event.key == pygame.K_t:
                 mission['mode'] = 'takeoff'
@@ -112,41 +113,41 @@ def mission_request():
     t_init = time.time()
     cmd = trajectory()
     cmd.b1 = [1,0,0]
-    cmd.header.frame_id = '/Maya/uav'
+    cmd.header.frame_id = 'uav'
 
     if mission['motor'] == True:
-        if rospy.get_param('/Maya/uav/Motor'):
-            rospy.set_param('/Maya/uav/Motor', False)
+        if rospy.get_param('/Jetson/uav/Motor'):
+            rospy.set_param('/Jetson/uav/Motor', False)
             print('Motor OFF')
         else:
-            rospy.set_param('/Maya/uav/Motor', True)
+            rospy.set_param('/Jetson/uav/Motor', True)
             print('Motor ON')
-        rospy.set_param('/Maya/uav/MotorWarmup', True)
+        rospy.set_param('/Jetson/uav/MotorWarmup', True)
         pub.publish(cmd)
         mission['motor'] = False
 
     elif mission['warmup'] == True:
-        if rospy.get_param('/Maya/uav/MotorWarmup'):
-            rospy.set_param('/Maya/uav/MotorWarmup', False)
+        if rospy.get_param('/Jetson/uav/MotorWarmup'):
+            rospy.set_param('/Jetson/uav/MotorWarmup', False)
             print('Motor warmup OFF')
         else:
-            rospy.set_param('/Maya/uav/MotorWarmup', True)
+            rospy.set_param('/Jetson/uav/MotorWarmup', True)
             print('Motor warmup ON')
         pub.publish(cmd)
         mission['warmup'] = False
     if mission['mode'] == 'reset':
-        rospy.set_param('/Maya/uav/MotorWarmup', True)
+        rospy.set_param('/Jetson/uav/MotorWarmup', True)
         print('Motor warmup OFF')
-        rospy.set_param('/Maya/uav/MotorWarmup', False)
+        rospy.set_param('/Jetson/uav/MotorWarmup', False)
         print('Motor warmup OFF')
         pub.publish(cmd)
 
     elif mission['mode'] == 'takeoff':
-        rospy.set_param('/Maya/uav/Motor', True)
-        rospy.set_param('/Maya/uav/MotorWarmup', True)
+        rospy.set_param('/Jetson/uav/Motor', True)
+        rospy.set_param('/Jetson/uav/MotorWarmup', True)
         print('Motor warmup ON')
         rospy.sleep(4)
-        rospy.set_param('/Maya/uav/MotorWarmup', False)
+        rospy.set_param('/Jetson/uav/MotorWarmup', False)
         print('Taking off at {} sec'.format(time.time()-t_init))
         t_init = time.time()
         t_total = 5
@@ -156,7 +157,7 @@ def mission_request():
             time.sleep(dt)
             cmd.header.stamp = rospy.get_rostime()
             height = z_min+v_up*t_cur
-            cmd.xc = [0,0,height if height < 1.5 else 1.5 ]
+            cmd.xc = [0,y_offset,height if height < 1.5 else 1.5 ]
             cmd.xc_dot = [0,0,v_up]
             pub.publish(cmd)
             get_key()
@@ -172,13 +173,13 @@ def mission_request():
             time.sleep(dt)
             cmd.header.stamp = rospy.get_rostime()
             height = z_hover - v_up*t_cur
-            cmd.xc = [0,0,height if height > z_min else 0]
+            cmd.xc = [0,y_offset,height if height > z_min else 0]
             cmd.xc_dot = [0,0,-v_up]
             pub.publish(cmd)
             get_key()
             if x_v[2] < z_min:
-                rospy.set_param('/Maya/uav/Motor', False)
-        rospy.set_param('/Maya/uav/Motor', False)
+                rospy.set_param('/Jetson/uav/Motor', False)
+        rospy.set_param('/Jetson/uav/Motor', False)
         mission['mode'] = 'wait'
         print('landing complete')
     elif mission['mode'] == 'spin':
@@ -191,12 +192,12 @@ def mission_request():
             cmd.header.stamp = rospy.get_rostime()
             theta = 2*np.pi/t_total*t_cur
             cmd.b1 = [np.cos(theta),np.sin(theta),0]
-            cmd.xc = [0,0,1.5]
+            cmd.xc = [0,y_offset,1.5]
             cmd.xc_dot = [0,0,0]
             pub.publish(cmd)
             get_key()
             if x_v[2] < z_min:
-                rospy.set_param('/Maya/uav/Motor', False)
+                rospy.set_param('/Jetson/uav/Motor', False)
         mission['mode'] = 'wait'
         print('spin')
         pass
@@ -215,17 +216,17 @@ def mission_request():
             pub.publish(cmd)
             get_key()
             if x_v[2] < z_min:
-                rospy.set_param('/Maya/uav/Motor', False)
+                rospy.set_param('/Jetson/uav/Motor', False)
         mission['mode'] = 'wait'
         print('Finish p2p')
         pass
 
     elif mission['mode'] == 'Simon':
-        rospy.set_param('/Maya/uav/Motor', True)
-        rospy.set_param('/Maya/uav/MotorWarmup', True)
+        rospy.set_param('/Jetson/uav/Motor', True)
+        rospy.set_param('/Jetson/uav/MotorWarmup', True)
         print('Motor warmup ON')
         rospy.sleep(1)
-        rospy.set_param('/Maya/uav/MotorWarmup', False)
+        rospy.set_param('/Jetson/uav/MotorWarmup', False)
         print('Simon')
         t_total = 140
         t_cur = 0
@@ -245,10 +246,10 @@ def mission_request():
             pub.publish(cmd)
             get_key()
 	    if x_v[2] < z_min and t_cur > 5:
-        	rospy.set_param('/Maya/uav/Motor', False)
+        	rospy.set_param('/Jetson/uav/Motor', False)
         mission['mode'] = 'wait'
         print('Simon mission complete')
-        rospy.set_param('/Maya/uav/Motor', False)
+        rospy.set_param('/Jetson/uav/Motor', False)
     elif mission['mode'] == 'hover':
         mission['mode'] = 'wait'
         pass
