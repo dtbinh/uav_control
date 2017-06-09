@@ -101,6 +101,9 @@ def get_key():
             elif event.key == pygame.K_p:
                 mission['mode'] = 'p2p'
                 window_update('Point to point')
+            elif event.key == pygame.K_b:
+                mission['mode'] = 'Est1'
+                window_update('Est1')
 
 
 pub = rospy.Publisher('xc', trajectory, queue_size= 10)
@@ -145,7 +148,7 @@ def mission_request():
         rospy.set_param('/Maya/uav/Motor', True)
         rospy.set_param('/Maya/uav/MotorWarmup', True)
         print('Motor warmup ON')
-        rospy.sleep(4)
+        rospy.sleep(2)
         rospy.set_param('/Maya/uav/MotorWarmup', False)
         print('Taking off at {} sec'.format(time.time()-t_init))
         t_init = time.time()
@@ -219,6 +222,55 @@ def mission_request():
         mission['mode'] = 'wait'
         print('Finish p2p')
         pass
+    elif mission['mode'] == 'Est1':
+        print('Motor warmup ON')
+        rospy.set_param('/Maya/uav/Motor', True)
+        rospy.set_param('/Maya/uav/MotorWarmup', True)
+        print('Motor warmup ON')
+        rospy.sleep(2)
+        rospy.set_param('/Maya/uav/MotorWarmup', False)
+        t_cur = 0
+        t_init = time.time()
+        # TODO
+        x0=np.array([0,0,0])
+        x1=np.array([0,0,1])
+        x2=np.array([1,1,1.5])
+        x3=np.array([0,1,1])
+        x4=np.array([0,0,1.5])
+        x5=np.array([1,1,1])
+        t1=3
+        dt2=6
+        dt3=5
+        dt4=4
+        dt5=3
+        t_total = 21
+        while t_cur <= t_total and mission['mode'] == 'Est1':
+            t_cur = time.time() - t_init
+            time.sleep(dt)
+            cmd.header.stamp = rospy.get_rostime()
+            cmd.xc_2dot = [0,0,0]
+            if t_cur<t1:
+                cmd.xc = x0+(x1-x0)*t_cur/t1
+                cmd.xc_dot = (x1-x0)/t1
+            elif t_cur<(t1+dt2):
+                cmd.xc = x1+(x2-x1)*(t_cur-t1)/dt2
+                cmd.xc_dot = (x2-x1)/dt2
+            elif t_cur<(t1+dt2+dt3):
+                cmd.xc = x2+(x3-x2)*(t_cur-t1-dt2)/dt3
+                cmd.xc_dot = (x3-x2)/dt3
+            elif t_cur<(t1+dt2+dt3+dt4):
+                cmd.xc = x3+(x4-x3)*(t_cur-t1-dt2-dt3)/dt4
+                cmd.xc_dot = (x4-x3)/dt4
+            elif t_cur<=(t1+dt2+dt3+dt4+dt5):
+                cmd.xc = x4+(x5-x4)*(t_cur-t1-dt2-dt3-dt4)/dt5
+                cmd.xc_dot = (x5-x4)/dt5
+            #cmd_tf_pub(cmd.xc)
+            pub.publish(cmd)
+            get_key()
+        mission['mode'] = 'wait'
+        print('Finish p2p')
+        pass
+
 
     elif mission['mode'] == 'Simon':
         rospy.set_param('/Maya/uav/Motor', True)

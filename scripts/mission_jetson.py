@@ -43,7 +43,7 @@ z_min = 0.4
 z_hover = 1.5
 v_up = 0.3
 x_v = [0,0,0]
-y_offset = 1
+y_offset = 0
 x_ship = [0,0,0]
 
 def mocap_sub(msg):
@@ -261,7 +261,7 @@ def mission_request():
 if __name__ == '__main__':
     try:
         rospy.init_node('command_station', anonymous=True)
-        uav_pose = rospy.Subscriber('/vicon/Maya/pose',PoseStamped, mocap_sub)
+        uav_pose = rospy.Subscriber('/vicon/Jetson/pose',PoseStamped, mocap_sub)
         ship_pose = rospy.Subscriber('/vicon/ship/pose',PoseStamped, mocap_sub_ship)
         while True:
             mission_request()
