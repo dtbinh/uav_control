@@ -42,7 +42,7 @@ class uav(object):
         self.R_v = np.eye(3)
         self.W = np.zeros(3)
         b1 = np.array([1,0,0])
-        self.xc = np.array([0,0,-1.2])
+        self.xc = np.array([0,0,1])
         self.xc_dot = np.zeros(3)
         self.xc_2dot = np.zeros(3)
         self.xc_3dot = np.zeros(3)
@@ -81,22 +81,21 @@ class uav(object):
                 time.sleep(0.01)
         #self.ukf = ukf_uav.UnscentedKalmanFilter(12,6,1)
         #self.unscented_kalman_filter()
-        self.pub_states = rospy.Publisher('uav_states', states, queue_sora
-                ze=10)
+        self.pub_states = rospy.Publisher('uav_states', states, queue_size=10)
         self.uav_states = states()
         #self.uav_states.xc = self.x_c
         self.tf_subscriber = tf.TransformListener()
-        self.uav_w = rospy.Subscriber('/imu/imu',Imu, self.imu_sub)
         self.dt_vicon = 0.01
         self.v_ave = np.array([0,0,0])
         self.v_ave_ned = self.R_U2D.dot(self.v_ave)
         self.time_vicon = rospy.get_rostime().to_sec()
         self.uav_pose = rospy.Subscriber('/vicon/'+self.uav_name+'/pose',PoseStamped, self.mocap_sub)
         self.trajectory_sub = rospy.Subscriber('/xc', trajectory, self.trajectory_sub)
+        self.uav_w = rospy.Subscriber('imu/imu',Imu, self.imu_sub)
         self.v_array = []
 
-        pub_state = Process(target=self.publish_states)
-        pub_state.start()
+        #pub_state = Process(target=self.publish_states)
+        #pub_state.start()
 
         self.lock = threading.Lock()
         #rospy.wait_for_service('/gain_tuning')
@@ -104,7 +103,7 @@ class uav(object):
         #self.odroid_sub = rospy.Subscriber('/drone_variable',error ,self.odroid_callback)
         srv = Server(gainsConfig, self.config_callback)
         rospy.spin()
-        pub_state.join()
+        #pub_state.join()
 
     def odroid_callback(self, msg):
         self.odroid_f = msg.force
@@ -128,6 +127,7 @@ class uav(object):
         self.c_controller.kv = config['kv']
         self.c_controller.kR = config['kR']
         self.c_controller.kW = config['kW']
+        self.xc = [config['x'],config['y'],config['z']]
         return config
 
     def v_update(self):
@@ -168,6 +168,7 @@ class uav(object):
             self.uav_states.R_v = self.R_v.flatten().tolist()
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
             print('No transform between vicon and UAV found')
+        #self.publish_states()
 
     def camera_sub(self):
         pass
@@ -175,6 +176,10 @@ class uav(object):
     def imu_sub(self, msg):
         self.imu_w = msg.angular_velocity
         w = msg.angular_velocity
+
+        self.W = np.array([w.x,w.y,w.z])
+        self.control()
+
         acc = msg.linear_acceleration
         self.linear_acceleration = np.array([acc.x,acc.y,acc.z])
         self.linear_velocity = self.linear_acceleration*self._dt
@@ -185,9 +190,7 @@ class uav(object):
         self.R_imu = self.tf.fromTranslationRotation((0,0,0), self.orientation)[:3,:3]
         self.uav_states.R_imu = self.R_imu.flatten().tolist()
         self.orientation = tf.transformations.quaternion_from_euler(euler_angle[0],euler_angle[1],euler_angle[2])
-        with self.lock:
-            self.W = np.array([w.x,w.y,w.z])
-            self.imu_q = msg.orientation
+        self.imu_q = msg.orientation
         self.uav_states.W = self.W.tolist()
         #self.run_ukf()
         #br = tf.TransformBroadcaster()
@@ -195,9 +198,6 @@ class uav(object):
         #        msg.header.stamp,
         #        'imu',
         #        'Jetson')
-        self.control()
-        self.publish_states()
-
     def control(self):
         self.x_ned = self.R_U2D.dot(self.x)
         self.v_ave_ned = self.R_U2D.dot(self.v_ave)

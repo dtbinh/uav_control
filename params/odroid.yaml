@@ -8,20 +8,20 @@ port:
     i2c: '41,42,43,44'
 controller:
     dt: 0.01
-    m: 1.45 # 1.7 kg with sensors
+    m: 1.5 # 1.7 kg with sensors
     J: '9.773e-3,9.773e-3,1.749e-2'
     l: 0.305
     c_tf: 0.1
     gain:
         att:
-            kp: 0.5
-            kd: 0.1
+            kp: 0.4
+            kd: 0.2
             ki: 0.0
         pos:
             kp: 8.0
             kd: 4.0
-            ki: 0.0
-    gains: '8,4,0,0.4,0.1,0'
+            ki: 1.0
+    gains: '8,4,0,0.4,0.2,0'
     saturation:
         x: 0.1
         R: 0.01
